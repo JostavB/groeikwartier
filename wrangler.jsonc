@@ -1,9 +1,20 @@
 {
-  // Testomgeving: statische site uit ./public op Cloudflare Workers.
+  // Het Groeikwartier: site + editor op Cloudflare Workers.
   "name": "groeikwartier-test",
+  "main": "src/index.js",
   "compatibility_date": "2026-10-01",
   "assets": {
     "directory": "./public",
-    "not_found_handling": "404-page"
-  }
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "rules": [{ "type": "Text", "globs": ["**/*.html"], "fallthrough": true }],
+  "kv_namespaces": [{ "binding": "CONTENT", "id": "56168b930549412b92b0bfb38f041633" }],
+  "vars": {
+    // Wie mag inloggen op /admin (komma-gescheiden Google-accounts).
+    "ADMIN_EMAILS": "hetgroeikwartier@gmail.com",
+    // Client-ID uit Google Cloud Console (OAuth, type Webapplicatie). Niet geheim.
+    "GOOGLE_CLIENT_ID": ""
+  },
+  "observability": { "enabled": true }
 }

@@ -1,0 +1,109 @@
+/* Editor-laag voor /admin. Alles met gk- is van de editor, niet van de site. */
+:root {
+  --gk-ink: #202B2D;
+  --gk-paper: #FFFFFF;
+  --gk-line: #D6D9D3;
+  --gk-sage: #ACB3AC;
+  --gk-green: #596E6E;
+  --gk-focus: #2F7D7A;
+  --gk-danger: #A2453B;
+  --gk-ui-font: 'Nunito Sans', system-ui, -apple-system, sans-serif;
+}
+
+html[data-admin] body { padding-top: var(--gk-bar-h, 56px); }
+html[data-admin] .m-header { top: var(--gk-bar-h, 56px) !important; }
+html[data-admin] section { scroll-margin-top: 130px !important; }
+
+.gk-ui, .gk-ui * { box-sizing: border-box; font-family: var(--gk-ui-font); }
+
+.gk-bar {
+  position: fixed; inset: 0 0 auto 0; z-index: 1000; min-height: 56px;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 8px max(16px, env(safe-area-inset-right, 0px)) 8px max(16px, env(safe-area-inset-left, 0px));
+  background: var(--gk-ink); color: #F2F2EE; font-size: 14px;
+  box-shadow: 0 1px 0 rgba(0,0,0,.2);
+}
+.gk-brand { font-weight: 700; letter-spacing: .02em; display: flex; align-items: baseline; gap: 6px; }
+.gk-brand small { font-weight: 400; opacity: .7; }
+.gk-actions, .gk-right { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.gk-right { margin-left: auto; }
+.gk-status { font-size: 13px; opacity: .85; margin-right: 6px; }
+.gk-who { font-size: 12px; opacity: .65; }
+
+.gk-btn {
+  font: 600 13px/1 var(--gk-ui-font); border: 1px solid rgba(255,255,255,.25); background: transparent; color: inherit;
+  padding: 9px 12px; min-height: 36px; border-radius: 6px; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center;
+}
+.gk-panel .gk-btn { border-color: var(--gk-line); color: var(--gk-ink); background: #F6F7F4; }
+.gk-btn:hover { background: rgba(255,255,255,.1); }
+.gk-panel .gk-btn:hover { background: #ECEEE9; }
+.gk-btn:disabled { opacity: .45; cursor: default; }
+.gk-btn.gk-primary, .gk-panel .gk-btn.gk-primary { background: var(--gk-sage); color: var(--gk-ink); border-color: var(--gk-sage); }
+.gk-btn.gk-primary:hover:not(:disabled) { filter: brightness(1.06); }
+.gk-btn.gk-ghost { border-color: transparent; }
+.gk-panel .gk-btn.gk-danger { color: var(--gk-danger); }
+.gk-btn:focus-visible, .gk-tbtn:focus-visible, .gk-input:focus-visible { outline: 2px solid var(--gk-focus); outline-offset: 2px; }
+
+/* bewerkbare delen */
+html.gk-on [data-k] { outline: 1px dashed transparent; outline-offset: 3px; transition: outline-color .15s; cursor: text; }
+html.gk-on [data-k]:hover { outline-color: rgba(47,125,122,.6); }
+html.gk-on [data-k]:focus { outline: 2px solid var(--gk-focus); }
+html.gk-on .gk-img { cursor: pointer; outline: 1px dashed transparent; outline-offset: 3px; }
+html.gk-on .gk-img:hover { outline: 2px dashed var(--gk-focus); }
+
+.gk-tools {
+  position: fixed; z-index: 1001; display: flex; align-items: center; gap: 2px; flex-wrap: wrap; max-width: calc(100vw - 16px);
+  background: var(--gk-ink); color: #F2F2EE; padding: 4px; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,.25);
+}
+.gk-tbtn { font: 600 13px/1 var(--gk-ui-font); background: transparent; color: inherit; border: 0; min-width: 34px; min-height: 34px; padding: 0 9px; border-radius: 5px; cursor: pointer; }
+.gk-tbtn:hover { background: rgba(255,255,255,.12); }
+.gk-pct { font-variant-numeric: tabular-nums; min-width: 52px; }
+.gk-sep { width: 1px; height: 20px; background: rgba(255,255,255,.2); margin: 0 4px; }
+.gk-note { font-size: 12px; padding: 0 8px; opacity: .8; }
+.gk-tools .gk-input { width: 260px; max-width: 60vw; min-height: 32px; padding: 6px 8px; border-radius: 5px; border: 0; }
+
+.gk-imgbtn {
+  position: fixed; z-index: 999; font: 600 13px/1 var(--gk-ui-font); background: var(--gk-ink); color: #F2F2EE;
+  border: 0; border-radius: 6px; padding: 10px 12px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,.25);
+}
+
+.gk-agenda-hint { display: flex; justify-content: center; }
+
+/* paneel */
+.gk-panel {
+  position: fixed; z-index: 1002; top: var(--gk-bar-h, 56px); right: 0; bottom: 0; width: min(440px, 100vw);
+  background: var(--gk-paper); color: var(--gk-ink); box-shadow: -8px 0 30px rgba(0,0,0,.18);
+  display: flex; flex-direction: column; font-size: 14px;
+}
+.gk-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--gk-line); }
+.gk-panel-head h2 { margin: 0; font-size: 18px; }
+.gk-panel-body { overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.gk-help { margin: 0; color: #4F5B5C; line-height: 1.5; }
+.gk-field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; font-weight: 600; color: #4F5B5C; min-width: 0; flex: 1; }
+.gk-input { font: 14px/1.3 var(--gk-ui-font); padding: 9px 10px; border: 1px solid var(--gk-line); border-radius: 6px; background: #FBFBF9; color: var(--gk-ink); width: 100%; min-height: 40px; }
+.gk-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.gk-item { border: 1px solid var(--gk-line); border-radius: 8px; padding: 12px; margin: 0 0 12px; display: flex; flex-direction: column; gap: 10px; }
+.gk-item legend { font-weight: 700; padding: 0 4px; }
+.gk-item-actions { justify-content: flex-start; }
+.gk-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+.gk-table th, .gk-table td { text-align: left; padding: 7px 4px; border-bottom: 1px solid var(--gk-line); }
+.gk-hist { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--gk-line); }
+.gk-hist div { display: flex; flex-direction: column; }
+.gk-hist small { color: #4F5B5C; }
+
+/* inloggen */
+.gk-login { position: fixed; inset: 0; z-index: 1003; background: rgba(32,43,45,.55); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; padding: 16px; }
+.gk-login-card { background: var(--gk-paper); color: var(--gk-ink); border-radius: 12px; padding: 28px; width: min(400px, 100%); display: flex; flex-direction: column; gap: 14px; align-items: center; text-align: center; }
+.gk-login-card h2 { margin: 0; font-size: 22px; }
+.gk-login-card p { margin: 0; line-height: 1.5; }
+.gk-login-err { color: var(--gk-danger); font-size: 13px; }
+.gk-login-err:empty { display: none; }
+.gk-ui[hidden] { display: none !important; }
+
+@media (max-width: 760px) {
+  .gk-bar { gap: 6px; padding-block: 6px; }
+  .gk-brand { width: 100%; }
+  .gk-btn { padding: 7px 9px; min-height: 32px; font-size: 12px; }
+  .gk-right { margin-left: 0; }
+  .gk-who { display: none; }
+}

@@ -4,7 +4,7 @@
 // Google-account dat in ADMIN_EMAILS staat (Google ID-token, gecontroleerd op de server).
 
 import TEMPLATE from './template.html';
-import { FONTS_KOP, FONTS_TEKST, fontLink, agendaHTML, DEFAULT_AGENDA, esc } from '../public/admin/shared.js';
+import { FONTS_KOP, FONTS_TEKST, fontLink, agendaHTML, DEFAULT_AGENDA, esc, KLEURVELDEN, kleurCSS } from '../public/admin/shared.js';
 
 const CONTENT_KEY = 'content';
 const HIST_PREFIX = 'hist:';
@@ -84,7 +84,7 @@ async function renderPage(env, url, admin) {
   const kop = FONTS_KOP[fonts.kop] ? fonts.kop : 'Cormorant Garamond';
   const tekst = FONTS_TEKST[fonts.tekst] ? fonts.tekst : 'Avenir';
 
-  let css = `:root{--font-kop:${FONTS_KOP[kop]};--font-tekst:${FONTS_TEKST[tekst]}}`;
+  let css = `:root{--font-kop:${FONTS_KOP[kop]};--font-tekst:${FONTS_TEKST[tekst]}}` + kleurCSS(c.colors);
   for (const [k, v] of Object.entries(sizes)) {
     const n = Number(v);
     if (/^[a-z0-9-]+$/.test(k) && n >= 0.5 && n <= 3 && n !== 1) css += `[data-k="${k}"]{--fs:${n}}`;
@@ -362,6 +362,8 @@ function cleanContent(b) {
   for (const [k, v] of Object.entries(b?.sizes || {})) { const n = Math.round(Number(v) * 100) / 100; if (key(k) && n >= 0.5 && n <= 3) out.sizes[k] = n; }
   for (const [k, v] of Object.entries(b?.images || {})) { const s = safeUrl(v, true); if (key(k) && s) out.images[k] = s; }
   for (const [k, v] of Object.entries(b?.links || {})) { const s = safeUrl(v, false); if (key(k) && s) out.links[k] = s; }
+  out.colors = {};
+  for (const f of KLEURVELDEN) { const v = b?.colors?.[f.key]; if (typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v)) out.colors[f.key] = v.toUpperCase(); }
   if (FONTS_KOP[b?.fonts?.kop]) out.fonts.kop = b.fonts.kop;
   if (FONTS_TEKST[b?.fonts?.tekst]) out.fonts.tekst = b.fonts.tekst;
   out.agenda = cleanAgenda(b?.agenda);

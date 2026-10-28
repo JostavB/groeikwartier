@@ -30,10 +30,34 @@ export function fontLink(names) {
   return `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?${q}&display=swap">`;
 }
 
+// Instelbare kleuren van de site. Sleutel = CSS-variabele --c-<sleutel>.
+export const KLEURVELDEN = [
+  { key: 'hoofd', label: 'Hoofdkleur', uitleg: 'Grote vlakken, knoppen, agendakaarten', standaard: '#596E6E' },
+  { key: 'donker', label: 'Donker', uitleg: 'Menu, voettekst, koppen, blok "Over ons"', standaard: '#202B2D' },
+  { key: 'accent', label: 'Accent', uitleg: 'Knoppen op donker, lijntjes', standaard: '#ACB3AC' },
+  { key: 'zand', label: 'Zand', uitleg: 'Blok "Kom kennismaken", agendakaarten', standaard: '#B7B1A6' },
+  { key: 'achtergrond', label: 'Achtergrond', uitleg: 'Achtergrond van de pagina', standaard: '#F2F2EE' },
+  { key: 'hero', label: 'Achtergrond bovenaan', uitleg: 'Vlak achter het logo', standaard: '#FAFAF7' },
+  { key: 'contact', label: 'Achtergrond contact', uitleg: 'Blok "Blijf op de hoogte"', standaard: '#DCDDD7' },
+  { key: 'kaart', label: 'Kaarten', uitleg: 'Agendakaarten en contactkader', standaard: '#FFFFFF' },
+  { key: 'tekst', label: 'Tekst', uitleg: 'Gewone tekst', standaard: '#2B3638' },
+  { key: 'tekst-zacht', label: 'Tekst zacht', uitleg: 'Ondertitels en kleine tekst', standaard: '#4F5B5C' },
+  { key: 'tekst-licht', label: 'Tekst op donker', uitleg: 'Lopende tekst op donkere vlakken', standaard: '#E3E7E4' },
+];
+
+export function kleurCSS(colors) {
+  let css = '';
+  for (const f of KLEURVELDEN) {
+    const v = colors?.[f.key];
+    if (typeof v === 'string' && /^#[0-9a-f]{6}$/i.test(v) && v.toUpperCase() !== f.standaard) css += `--c-${f.key}:${v};`;
+  }
+  return css ? `:root{${css}}` : '';
+}
+
 export const KLEUREN = {
-  donker: { bg: '#596E6E', fg: '#F2F2EE', sub: '#D3DAD5' },
-  zand: { bg: '#B7B1A6', fg: '#202B2D', sub: '#596E6E' },
-  salie: { bg: '#ACB3AC', fg: '#202B2D', sub: '#202B2D' },
+  donker: { bg: 'var(--c-hoofd)', fg: 'var(--c-achtergrond)', sub: 'color-mix(in srgb, var(--c-accent) 55%, #fff)' },
+  zand: { bg: 'var(--c-zand)', fg: 'var(--c-donker)', sub: 'var(--c-hoofd)' },
+  salie: { bg: 'var(--c-accent)', fg: 'var(--c-donker)', sub: 'var(--c-donker)' },
 };
 
 export const DEFAULT_AGENDA = [
@@ -60,14 +84,14 @@ export function agendaHTML(items, vandaag, admin) {
     .map((it) => {
       const k = KLEUREN[it.kleur] || KLEUREN.donker;
       const verlopen = it.datum && it.datum < vandaag;
-      return `<article data-id="${esc(it.id)}" style="background: #FFFFFF; display: flex; flex-direction: column${verlopen ? '; opacity: .45' : ''}">
+      return `<article data-id="${esc(it.id)}" style="background: var(--c-kaart); display: flex; flex-direction: column${verlopen ? '; opacity: .45' : ''}">
           <div style="background: ${k.bg}; color: ${k.fg}; aspect-ratio: 16 / 10; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 0 12px">
             <span style="font-family: var(--font-kop); font-weight: 500; font-size: 3.2rem; line-height: 1">${esc(it.groot)}</span>
             <span style="font-size: 0.7rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: ${k.sub}">${esc(it.klein)}</span>
           </div>
           <div style="padding: 24px 22px 28px; text-align: center; display: flex; flex-direction: column; gap: 8px">
-            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 600; color: #202B2D">${esc(it.titel)}</h3>
-            <p style="margin: 0; font-size: 0.92rem; line-height: 1.6; color: #4F5B5C">${esc(it.tekst)}</p>
+            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 600; color: var(--c-donker)">${esc(it.titel)}</h3>
+            <p style="margin: 0; font-size: 0.92rem; line-height: 1.6; color: var(--c-tekst-zacht)">${esc(it.tekst)}</p>
           </div>
         </article>`;
     })

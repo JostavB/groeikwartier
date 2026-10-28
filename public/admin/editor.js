@@ -1,5 +1,5 @@
 // Editor voor het Groeikwartier. Draait op /admin, bovenop de echte pagina.
-import { FONTS_KOP, FONTS_TEKST, fontLink, agendaHTML, KLEUREN, DEFAULT_AGENDA } from './shared.js';
+import { FONTS_KOP, FONTS_TEKST, fontLink, agendaHTML, KLEUREN, DEFAULT_AGENDA, KLEURVELDEN } from './shared.js';
 
 const GK = window.GK || {};
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -29,6 +29,7 @@ function normalize(c) {
     images: { ...(c.images || {}) },
     links: { ...(c.links || {}) },
     fonts: { kop: 'Cormorant Garamond', tekst: 'Avenir', ...(c.fonts || {}) },
+    colors: { ...(c.colors || {}) },
     agenda: JSON.parse(JSON.stringify(c.agenda ?? DEFAULT_AGENDA)),
     meta: c.meta || null,
   };
@@ -44,7 +45,7 @@ const who = h('span', { class: 'gk-who' });
 bar.append(
   h('span', { class: 'gk-brand' }, 'Groeikwartier', h('small', {}, 'editor')),
   h('div', { class: 'gk-actions' },
-    h('button', { class: 'gk-btn', type: 'button', onclick: () => openPanel('fonts') }, 'Lettertypen'),
+    h('button', { class: 'gk-btn', type: 'button', onclick: () => openPanel('fonts') }, 'Instellingen'),
     h('button', { class: 'gk-btn', type: 'button', onclick: () => openPanel('agenda') }, 'Agenda'),
     h('button', { class: 'gk-btn', type: 'button', onclick: () => openPanel('signups') }, 'Aanmeldingen'),
     h('button', { class: 'gk-btn', type: 'button', onclick: () => openPanel('history') }, 'Versies'),
@@ -367,7 +368,7 @@ function openPanel(kind) {
   panel.hidden = false;
   const close = h('button', { class: 'gk-btn gk-ghost gk-close', type: 'button', onclick: () => { panel.hidden = true; } }, 'Sluiten');
   const body = h('div', { class: 'gk-panel-body' });
-  const titles = { fonts: 'Lettertypen', agenda: 'Agenda', signups: 'Aanmeldingen', history: 'Versies' };
+  const titles = { fonts: 'Instellingen', agenda: 'Agenda', signups: 'Aanmeldingen', history: 'Versies' };
   panel.append(h('div', { class: 'gk-panel-head' }, h('h2', {}, titles[kind]), close), body);
   ({ fonts: fontsPanel, agenda: agendaPanel, signups: signupsPanel, history: historyPanel })[kind](body);
 }
@@ -380,10 +381,56 @@ function fontsPanel(body) {
     return h('label', { class: 'gk-field', for: 'gk-font-' + key }, h('span', {}, label), s);
   };
   body.append(
-    h('p', { class: 'gk-help' }, 'Kies een lettertype voor de koppen en een voor de lopende tekst. Je ziet het meteen op de pagina. Tekstgrootte pas je per tekst aan met A− en A+ in de werkbalk boven de tekst.'),
+    h('h3', { class: 'gk-sub' }, 'Lettertypen'),
+    h('p', { class: 'gk-help' }, 'Kies een lettertype voor de koppen en een voor de lopende tekst. Tekstgrootte pas je per tekst aan met A− en A+ in de werkbalk boven de tekst.'),
     sel('Koppen', FONTS_KOP, 'kop'),
     sel('Tekst', FONTS_TEKST, 'tekst'),
+    h('h3', { class: 'gk-sub' }, 'Kleuren'),
+    h('p', { class: 'gk-help' }, 'Je ziet een wijziging meteen op de pagina. Pas na Publiceren is hij live. Tinten die van deze kleuren zijn afgeleid, zoals lichtere randjes, schuiven automatisch mee.'),
   );
+  const rows = KLEURVELDEN.map((f) => colorRow(f));
+  body.append(...rows.map((r) => r.el));
+  const resetAll = h('button', { class: 'gk-btn', type: 'button' }, 'Alle kleuren terug naar standaard');
+  resetAll.addEventListener('click', () => {
+    if (!resetAll.dataset.sure) { resetAll.dataset.sure = '1'; resetAll.textContent = 'Zeker weten?'; return; }
+    content.colors = {};
+    rows.forEach((r) => r.sync());
+    applyColors(); setDirty();
+    delete resetAll.dataset.sure; resetAll.textContent = 'Alle kleuren terug naar standaard';
+  });
+  body.append(resetAll);
+}
+
+function colorRow(f) {
+  const id = 'gk-color-' + f.key;
+  const cur = () => (content.colors[f.key] || f.standaard).toUpperCase();
+  const picker = h('input', { type: 'color', class: 'gk-swatch', id, value: cur().toLowerCase(), 'aria-label': f.label });
+  const hex = h('input', { type: 'text', class: 'gk-input gk-hex', value: cur(), maxlength: 7, spellcheck: 'false', 'aria-label': f.label + ' (hexcode)' });
+  const reset = h('button', { class: 'gk-btn gk-ghost', type: 'button', title: 'Terug naar ' + f.standaard }, 'Standaard');
+  const set = (v) => {
+    v = v.toUpperCase();
+    if (v === f.standaard) delete content.colors[f.key]; else content.colors[f.key] = v;
+    applyColors(); setDirty();
+    reset.disabled = !content.colors[f.key];
+  };
+  picker.addEventListener('input', () => { hex.value = picker.value.toUpperCase(); set(picker.value); });
+  hex.addEventListener('input', () => {
+    let v = hex.value.trim(); if (v && v[0] !== '#') v = '#' + v;
+    if (/^#[0-9a-f]{6}$/i.test(v)) { picker.value = v.toLowerCase(); set(v); }
+  });
+  reset.addEventListener('click', () => { set(f.standaard); sync(); });
+  const sync = () => { picker.value = cur().toLowerCase(); hex.value = cur(); reset.disabled = !content.colors[f.key]; };
+  reset.disabled = !content.colors[f.key];
+  const el = h('div', { class: 'gk-color' },
+    picker,
+    h('label', { class: 'gk-color-text', for: id }, h('strong', {}, f.label), h('small', {}, f.uitleg)),
+    hex, reset);
+  return { el, sync };
+}
+
+function applyColors() {
+  const root = document.documentElement.style;
+  for (const f of KLEURVELDEN) root.setProperty('--c-' + f.key, content.colors[f.key] || f.standaard);
 }
 
 function applyFonts() {

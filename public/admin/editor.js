@@ -17,8 +17,6 @@ const h = (tag, attrs = {}, ...kids) => {
 };
 
 const content = normalize(GK.content || {});
-let token = null;
-let user = null;
 let dirty = false;
 let retryQueue = [];
 
@@ -59,10 +57,10 @@ bar.append(
   ),
 );
 
-const login = h('div', { class: 'gk-ui gk-login' },
+const login = h('div', { class: 'gk-ui gk-login', hidden: true },
   h('div', { class: 'gk-login-card' },
-    h('h2', {}, 'Inloggen'),
-    h('p', { class: 'gk-login-msg' }, 'Log in met het Google-account van het Groeikwartier om de website te bewerken.'),
+    h('h2', {}, 'Opnieuw inloggen'),
+    h('p', { class: 'gk-login-msg' }, 'Je sessie is verlopen. Log opnieuw in; je wijzigingen blijven staan.'),
     h('div', { id: 'gk-gbtn' }),
     h('p', { class: 'gk-login-err', role: 'alert' }),
   ),
@@ -92,26 +90,20 @@ document.addEventListener('submit', (e) => e.preventDefault(), true);
 
 window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
 
-// ---------------- inloggen ----------------
-
-function tokenExp(t) {
-  try { return JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).exp * 1000; } catch { return 0; }
-}
+// ---------------- sessie ----------------
+// Je komt hier alleen met een geldige sessie (de server controleert dat).
+// Verloopt de sessie tijdens het werken, dan log je opnieuw in zonder de pagina te verlaten.
 
 function showLogin(msg, err) {
   login.hidden = false;
   if (msg) $('.gk-login-msg', login).textContent = msg;
   $('.gk-login-err', login).textContent = err || '';
-  if (!GK.clientId) {
-    $('.gk-login-err', login).textContent = 'Google-inloggen wordt nog ingesteld. Probeer het later opnieuw.';
-    return;
-  }
   waitFor(() => window.google?.accounts?.id).then((gid) => {
-    gid.initialize({ client_id: GK.clientId, callback: (r) => onCredential(r.credential), auto_select: false, ux_mode: 'popup' });
+    gid.initialize({ client_id: GK.clientId, callback: (r) => relogin(r.credential), auto_select: false, ux_mode: 'popup' });
     const box = $('#gk-gbtn');
     box.textContent = '';
     gid.renderButton(box, { theme: 'outline', size: 'large', text: 'signin_with', shape: 'pill', locale: 'nl' });
-  });
+  }).catch(() => { $('.gk-login-err', login).textContent = 'Google-inloggen laadt niet. Ververs de pagina.'; });
 }
 
 function waitFor(fn, ms = 15000) {
@@ -126,47 +118,31 @@ function waitFor(fn, ms = 15000) {
   });
 }
 
-async function onCredential(t) {
-  token = t;
+async function relogin(credential) {
   try {
-    const res = await fetch('/api/admin/me', { headers: { authorization: 'Bearer ' + t } });
+    const res = await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json', 'x-gk': '1' }, body: JSON.stringify({ credential }) });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || 'Inloggen mislukt.');
-    user = data;
-    try { sessionStorage.setItem('gk-token', t); } catch {}
     login.hidden = true;
-    who.textContent = user.email;
-    enableEditing();
     const q = retryQueue; retryQueue = [];
     q.forEach((fn) => fn());
   } catch (e) {
-    token = null;
-    try { sessionStorage.removeItem('gk-token'); } catch {}
-    window.google?.accounts?.id?.disableAutoSelect?.();
     showLogin(null, e.message);
   }
 }
 
-function logout() {
-  if (dirty && !confirmInline('Je hebt wijzigingen die nog niet gepubliceerd zijn. Toch uitloggen?')) return;
-  token = null; user = null;
-  try { sessionStorage.removeItem('gk-token'); } catch {}
-  window.google?.accounts?.id?.disableAutoSelect?.();
+async function logout() {
+  if (dirty && !window.confirm('Je hebt wijzigingen die nog niet gepubliceerd zijn. Toch uitloggen?')) return;
   dirty = false;
-  location.reload();
+  try { await fetch('/api/logout', { method: 'POST', headers: { 'x-gk': '1' } }); } catch {}
+  window.google?.accounts?.id?.disableAutoSelect?.();
+  location.href = '/admin';
 }
 
-// Eenvoudige bevestiging in de pagina zelf (window.confirm is soms geblokkeerd).
-function confirmInline(text) { return window.confirm ? window.confirm(text) : true; }
-
 async function api(path, opts = {}) {
-  if (!token || tokenExp(token) < Date.now() + 30000) {
-    await new Promise((resolve) => { retryQueue.push(resolve); showLogin('Je login is verlopen. Log opnieuw in; je wijzigingen blijven staan.'); });
-  }
-  const res = await fetch(path, { ...opts, headers: { ...(opts.headers || {}), authorization: 'Bearer ' + token } });
+  const res = await fetch(path, { ...opts, credentials: 'same-origin', headers: { ...(opts.headers || {}), 'x-gk': '1' } });
   if (res.status === 401) {
-    token = null;
-    await new Promise((resolve) => { retryQueue.push(resolve); showLogin('Je login is verlopen. Log opnieuw in; je wijzigingen blijven staan.'); });
+    await new Promise((resolve) => { retryQueue.push(resolve); showLogin('Je sessie is verlopen. Log opnieuw in; je wijzigingen blijven staan.'); });
     return api(path, opts);
   }
   const data = await res.json().catch(() => ({}));
@@ -589,7 +565,5 @@ function fmtDate(iso) {
 
 // ---------------- start ----------------
 
-let saved = null;
-try { saved = sessionStorage.getItem('gk-token'); } catch {}
-if (saved && tokenExp(saved) > Date.now() + 60000) onCredential(saved);
-else showLogin();
+who.textContent = GK.user?.email || '';
+enableEditing();

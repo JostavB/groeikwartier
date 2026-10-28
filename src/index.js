@@ -4,6 +4,7 @@
 // Google-account dat in ADMIN_EMAILS staat (Google ID-token, gecontroleerd op de server).
 
 import TEMPLATE from './template.html';
+import LOGIN_PAGE from './login.html';
 import { FONTS_KOP, FONTS_TEKST, fontLink, agendaHTML, DEFAULT_AGENDA, esc, KLEURVELDEN, kleurCSS } from '../public/admin/shared.js';
 
 const CONTENT_KEY = 'content';
@@ -11,6 +12,9 @@ const HIST_PREFIX = 'hist:';
 const HIST_KEEP = 30;
 const MEDIA_PREFIX = 'media:';
 const SIGNUP_PREFIX = 'signup:';
+const SESSION_PREFIX = 'sess:';
+const SESSION_COOKIE = '__Host-gk_sessie';
+const SESSION_TTL = 12 * 60 * 60; // 12 uur
 const MAX_UPLOAD = 10 * 1024 * 1024;
 const IMAGE_TYPES = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif', 'image/avif': 'avif' };
 
@@ -42,7 +46,22 @@ async function route(request, env, ctx) {
   }
 
   if ((path === '/' || path === '/index.html') && method === 'GET') return renderPage(env, url, false);
-  if ((path === '/admin' || path === '/admin/') && method === 'GET') return renderPage(env, url, true);
+  // ---- beheer: alles onder /admin is afgeschermd, behalve het inlogscherm zelf ----
+  if ((path === '/admin' || path === '/admin/') && method === 'GET') {
+    if (await getSession(request, env)) return redirect('/admin/editor');
+    return loginPage(env, url);
+  }
+  if (path === '/api/login' && method === 'POST') return login(request, env, url);
+  if (path === '/api/logout' && method === 'POST') return logout(request, env, url);
+  if (path.startsWith('/admin/')) {
+    const user = await getSession(request, env);
+    if (!user) return path === '/admin/editor' ? redirect('/admin') : new Response('Niet gevonden', { status: 404 });
+    if (path === '/admin/editor' && method === 'GET') return renderPage(env, url, true, user);
+    const res = await env.ASSETS.fetch(request);
+    const r = withSecurity(res, url, true);
+    r.headers.set('cache-control', 'private, no-store');
+    return r;
+  }
   if (path === '/robots.txt') return robots(url);
 
   if (path.startsWith('/media/') && method === 'GET') return media(env, path.slice(7));
@@ -55,7 +74,7 @@ async function route(request, env, ctx) {
   if (path === '/api/sync/agenda' && method === 'PUT') return syncAgenda(request, env);
 
   if (path.startsWith('/api/admin/')) {
-    const user = await requireAdmin(request, env);
+    const user = await requireAdmin(request, env, url);
     return adminApi(request, env, path.slice(11), method, user);
   }
 
@@ -74,7 +93,7 @@ function today() {
   return new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Amsterdam' });
 }
 
-async function renderPage(env, url, admin) {
+async function renderPage(env, url, admin, user = null) {
   const c = await getContent(env);
   const texts = c.texts || {};
   const sizes = c.sizes || {};
@@ -93,6 +112,7 @@ async function renderPage(env, url, admin) {
   if (admin) {
     const cfg = {
       clientId: env.GOOGLE_CLIENT_ID || '',
+      user: user ? { email: user.email } : null,
       content: c,
       defaultAgenda: DEFAULT_AGENDA,
       today: today(),
@@ -260,8 +280,11 @@ async function verifyGoogleToken(token, env) {
   if (!clientId) throw new HttpError(503, 'Google-inloggen is nog niet ingesteld.');
   const parts = token.split('.');
   if (parts.length !== 3) throw new HttpError(401, 'Ongeldige login.');
-  const header = JSON.parse(new TextDecoder().decode(b64url(parts[0])));
-  const payload = JSON.parse(new TextDecoder().decode(b64url(parts[1])));
+  let header, payload;
+  try {
+    header = JSON.parse(new TextDecoder().decode(b64url(parts[0])));
+    payload = JSON.parse(new TextDecoder().decode(b64url(parts[1])));
+  } catch { throw new HttpError(401, 'Ongeldige login.'); }
   if (header.alg !== 'RS256') throw new HttpError(401, 'Ongeldige login.');
   const jwk = (await googleKeys()).find((k) => k.kid === header.kid);
   if (!jwk) { certCache.until = 0; throw new HttpError(401, 'Login verlopen, log opnieuw in.'); }
@@ -276,15 +299,68 @@ async function verifyGoogleToken(token, env) {
   return payload;
 }
 
-async function requireAdmin(request, env) {
-  const auth = request.headers.get('authorization') || '';
-  const token = auth.startsWith('Bearer ') ? auth.slice(7).trim() : '';
-  if (!token) throw new HttpError(401, 'Log in om verder te gaan.');
-  const p = await verifyGoogleToken(token, env);
+function allowedEmail(email, env) {
   const allowed = String(env.ADMIN_EMAILS || '').split(',').map((e) => e.trim().toLowerCase()).filter(Boolean);
-  const email = String(p.email || '').toLowerCase();
-  if (!allowed.includes(email)) throw new HttpError(403, `${email} heeft geen toegang tot de editor.`);
-  return { email, name: p.name || email };
+  return allowed.includes(String(email || '').toLowerCase());
+}
+
+function readCookie(request, name) {
+  const c = request.headers.get('cookie') || '';
+  for (const part of c.split(';')) {
+    const [k, ...v] = part.trim().split('=');
+    if (k === name) return v.join('=');
+  }
+  return '';
+}
+
+// Sessie = willekeurige sleutel in een HttpOnly-cookie; de inhoud staat alleen in KV.
+async function getSession(request, env) {
+  const id = readCookie(request, SESSION_COOKIE);
+  if (!/^[a-z0-9]{48}$/.test(id)) return null;
+  const s = await env.CONTENT.get(SESSION_PREFIX + id, 'json');
+  if (!s || !allowedEmail(s.email, env) || s.exp < Date.now()) return null;
+  return { ...s, id };
+}
+
+function sameOrigin(request, url) {
+  const origin = request.headers.get('origin');
+  if (origin && origin !== url.origin) return false;
+  return request.headers.get('x-gk') === '1';
+}
+
+async function login(request, env, url) {
+  if (!sameOrigin(request, url)) throw new HttpError(403, 'Ongeldig verzoek.');
+  const { credential } = await readJson(request, 10000);
+  if (typeof credential !== 'string') throw new HttpError(400, 'Geen login ontvangen.');
+  const p = await verifyGoogleToken(credential, env);
+  if (!allowedEmail(p.email, env)) throw new HttpError(403, 'Dit Google-account heeft geen toegang. Log in met het account van het Groeikwartier.');
+  const id = randomId(48);
+  const email = String(p.email).toLowerCase();
+  await env.CONTENT.put(SESSION_PREFIX + id, JSON.stringify({ email, name: p.name || email, exp: Date.now() + SESSION_TTL * 1000 }), { expirationTtl: SESSION_TTL });
+  return json({ ok: true }, 200, { 'set-cookie': `${SESSION_COOKIE}=${id}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${SESSION_TTL}` });
+}
+
+async function logout(request, env, url) {
+  if (!sameOrigin(request, url)) throw new HttpError(403, 'Ongeldig verzoek.');
+  const id = readCookie(request, SESSION_COOKIE);
+  if (/^[a-z0-9]{48}$/.test(id)) await env.CONTENT.delete(SESSION_PREFIX + id);
+  return json({ ok: true }, 200, { 'set-cookie': `${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0` });
+}
+
+async function requireAdmin(request, env, url) {
+  if (request.method !== 'GET' && !sameOrigin(request, url)) throw new HttpError(403, 'Ongeldig verzoek.');
+  const s = await getSession(request, env);
+  if (!s) throw new HttpError(401, 'Je sessie is verlopen. Log opnieuw in.');
+  return { email: s.email, name: s.name };
+}
+
+function redirect(to) {
+  return new Response(null, { status: 302, headers: { location: to, 'cache-control': 'no-store' } });
+}
+
+function loginPage(env, url) {
+  const html = LOGIN_PAGE.replace('__CLIENT_ID__', esc(env.GOOGLE_CLIENT_ID || ''));
+  return withSecurity(new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } }), url, true);
 }
 
 // ---------- beheer ----------

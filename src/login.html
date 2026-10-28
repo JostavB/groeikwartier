@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Inloggen · Het Groeikwartier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&family=Nunito+Sans:wght@400;600&display=swap">
+<style>
+  :root { --bg: #F2F2EE; --card: #FFFFFF; --ink: #202B2D; --soft: #4F5B5C; --line: #DCDDD7; --err: #A2453B; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 24px max(16px, env(safe-area-inset-right, 0px)) 24px max(16px, env(safe-area-inset-left, 0px));
+    background: var(--bg); color: var(--ink); font-family: 'Nunito Sans', system-ui, sans-serif;
+  }
+  main { width: min(420px, 100%); background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 36px 28px; display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; }
+  img { width: min(260px, 100%); height: auto; }
+  h1 { margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 2rem; }
+  p { margin: 0; color: var(--soft); line-height: 1.55; }
+  #knop { min-height: 44px; display: flex; justify-content: center; }
+  #fout { color: var(--err); font-size: 0.92rem; }
+  #fout:empty { display: none; }
+  a { color: var(--soft); font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<main>
+  <img src="/logo-grijs.png" alt="Het Groeikwartier">
+  <h1>Beheer</h1>
+  <p>Log in met het Google-account van het Groeikwartier.</p>
+  <div id="knop"></div>
+  <p id="fout" role="alert"></p>
+  <a href="/">Naar de website</a>
+</main>
+<script>
+  var CLIENT_ID = '__CLIENT_ID__';
+  var fout = document.getElementById('fout');
+  function inloggen(r) {
+    fout.textContent = '';
+    fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json', 'x-gk': '1' }, body: JSON.stringify({ credential: r.credential }) })
+      .then(function (res) { return res.json().then(function (d) { if (!res.ok) throw new Error(d.error || 'Inloggen mislukt.'); }); })
+      .then(function () { location.href = '/admin/editor'; })
+      .catch(function (e) { fout.textContent = e.message; if (window.google) google.accounts.id.disableAutoSelect(); });
+  }
+  function start() {
+    if (!CLIENT_ID) { fout.textContent = 'Inloggen is nog niet ingesteld.'; return; }
+    if (!window.google || !google.accounts) { fout.textContent = 'Google-inloggen laadt niet. Ververs de pagina.'; return; }
+    google.accounts.id.initialize({ client_id: CLIENT_ID, callback: inloggen, auto_select: false, ux_mode: 'popup' });
+    google.accounts.id.renderButton(document.getElementById('knop'), { theme: 'outline', size: 'large', text: 'signin_with', shape: 'pill', locale: 'nl' });
+  }
+</script>
+<script src="https://accounts.google.com/gsi/client" async onload="start()"></script>
+</body>
+</html>

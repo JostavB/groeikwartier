@@ -107,11 +107,10 @@ function showLogin(msg, err) {
     return;
   }
   waitFor(() => window.google?.accounts?.id).then((gid) => {
-    gid.initialize({ client_id: GK.clientId, callback: (r) => onCredential(r.credential), auto_select: true, use_fedcm_for_prompt: true, itp_support: true });
+    gid.initialize({ client_id: GK.clientId, callback: (r) => onCredential(r.credential), auto_select: false, ux_mode: 'popup' });
     const box = $('#gk-gbtn');
     box.textContent = '';
     gid.renderButton(box, { theme: 'outline', size: 'large', text: 'signin_with', shape: 'pill', locale: 'nl' });
-    gid.prompt();
   });
 }
 

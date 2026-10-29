@@ -7,6 +7,7 @@
 html,body{margin:0;background:var(--c-achtergrond);color:var(--c-tekst)}
 [data-k]{--fs:1}
 .m-toggle[aria-expanded="true"] svg{transform:rotate(180deg)}
+.m-toggle:hover,.m-toggle:focus-visible{color:var(--link-hover)}
 :focus-visible{outline:2px solid var(--c-accent);outline-offset:3px}
 html{scroll-behavior:smooth}
 @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
@@ -20,8 +21,8 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
 .m-person h3,.m-person h3 + p{text-align:center}
 .m-photo{width:140px;height:140px;border-radius:50%;background:var(--c-hoofd);display:flex;align-items:center;justify-content:center;font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--c-zand);flex:none}
 @media (min-width: 760px){.m-person{grid-template-columns:170px minmax(0,1fr);gap:48px;align-items:start;justify-items:start}.m-photo{width:170px;height:170px}.m-person h3,.m-person h3 + p{text-align:left}}
-.m-toggle{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;background:none;border:0;border-bottom:1px solid var(--c-accent);color:var(--c-achtergrond);font:inherit;font-size:0.72rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;padding:12px 0 8px;min-height:44px;cursor:pointer}
-.m-toggle svg{width:16px;height:16px;fill:none;stroke:var(--c-accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
+.m-toggle{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;background:none;border:0;border-bottom:1px solid currentColor;color:#FFFFFF;transition:color .15s;font:inherit;font-size:0.72rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;padding:12px 0 8px;min-height:44px;cursor:pointer}
+.m-toggle svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
 .m-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:20px}
 .m-hero-wide{display:none}
 .m-hero{position:relative;background:var(--c-hero);overflow:hidden;display:flex;flex-direction:column;min-height:calc(100svh - 68px - env(safe-area-inset-bottom))}

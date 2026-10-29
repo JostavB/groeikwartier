@@ -8,6 +8,7 @@ import LOGIN_PAGE from './login.html';
 import PAGE_SAMENWERKEN from './pages/samenwerken.html';
 import PAGE_PRIVACY from './pages/privacy.html';
 import PAGE_AFMELDEN from './pages/afmelden.html';
+import PAGE_DISCLAIMER from './pages/disclaimer.html';
 import { FONTS_KOP, FONTS_TEKST, STANDAARD_KOP, STANDAARD_TEKST, agendaHTML, DEFAULT_AGENDA, esc, KLEURVELDEN, kleurCSS } from '../public/admin/shared.js';
 
 const CONTENT_KEY = 'content';
@@ -28,6 +29,7 @@ const PAGES = {
   samenwerken: { path: '/samenwerken', title: 'Samenwerken · Het Groeikwartier', body: PAGE_SAMENWERKEN },
   privacy: { path: '/privacy', title: 'Privacyverklaring · Het Groeikwartier', body: PAGE_PRIVACY },
   afmelden: { path: '/afmelden', title: 'Afmelden · Het Groeikwartier', body: PAGE_AFMELDEN },
+  disclaimer: { path: '/disclaimer', title: 'Disclaimer · Het Groeikwartier', body: PAGE_DISCLAIMER },
 };
 
 function pageHTML(name) {

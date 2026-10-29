@@ -543,6 +543,7 @@ function cleanAgenda(list) {
     titel: str(it?.titel, 120),
     tekst: str(it?.tekst, 300),
     kleur: ['donker', 'zand', 'salie'].includes(it?.kleur) ? it.kleur : 'donker',
+    ...(/^https?:\/\//i.test(safeUrl(it?.link, false)) ? { link: safeUrl(it.link, false) } : {}),
     ...(it?.bron ? { bron: str(it.bron, 40) } : {}),
   }));
 }

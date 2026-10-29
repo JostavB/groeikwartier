@@ -92,7 +92,7 @@ export function agendaHTML(items, vandaag, admin) {
             <span style="font-size: 0.7rem; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; color: ${k.sub}">${esc(it.klein)}</span>
           </div>
           <div style="padding: 24px 22px 28px; text-align: center; display: flex; flex-direction: column; gap: 8px">
-            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 600; color: var(--c-donker)">${esc(it.titel)}</h3>
+            <h3 style="margin: 0; font-size: 1.05rem; font-weight: 600; color: var(--c-donker)">${it.link ? `<a class="tekstlink" href="${esc(it.link)}" target="_blank" rel="noopener">${esc(it.titel)}</a>` : esc(it.titel)}</h3>
             <p style="margin: 0; font-size: 0.92rem; line-height: 1.6; color: var(--c-tekst-zacht)">${esc(it.tekst)}</p>
           </div>
         </article>`;

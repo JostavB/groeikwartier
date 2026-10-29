@@ -498,6 +498,7 @@ function agendaItem(it, i, redraw) {
     h('div', { class: 'gk-row' }, field('Grote tekst', 'groot', { maxlength: 20, placeholder: '7 nov' }), field('Kleine tekst', 'klein', { maxlength: 40, placeholder: 'Zaterdag' })),
     field('Titel', 'titel', { maxlength: 120 }),
     field('Omschrijving', 'tekst', { maxlength: 300 }),
+    field('Link (optioneel)', 'link', { type: 'url', placeholder: 'https://…' }),
     h('label', { class: 'gk-field', for: id('kleur') }, h('span', {}, 'Kleur'), kleur),
     h('div', { class: 'gk-row gk-item-actions' },
       h('button', { class: 'gk-btn', type: 'button', onclick: move(-1), disabled: i === 0 }, 'Omhoog'),

@@ -80,6 +80,10 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
 [data-k] a:hover,[data-k] a:focus-visible,a[data-l]:not(.knop):hover,a[data-l]:not(.knop):focus-visible,a.tekstlink:hover,a.tekstlink:focus-visible{color:var(--link-hover)}
 /* Knoppen: bij aanwijzen wisselen achtergrond en tekst */
 .knoppen{display:flex;flex-wrap:wrap;gap:12px}
+/* Twee knoppen naast elkaar: altijd even breed, tekst in het midden; op de telefoon onder elkaar en gecentreerd */
+.knoppen-paar{display:inline-grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:12px}
+.knoppen-paar .knop{display:flex;align-items:center;justify-content:center;text-align:center;box-sizing:border-box;min-height:48px}
+@media (max-width: 600px){.knoppen-paar{display:grid;grid-auto-flow:row;width:100%;max-width:340px;margin-inline:auto}}
 .knop{display:inline-block;background:var(--c-accent);color:var(--c-donker);border:2px solid var(--c-accent);text-decoration:none;padding:12px 24px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;transition:background-color .2s,color .2s,border-color .2s}
 .knop:hover,.knop:focus-visible{background:var(--c-donker);color:var(--c-accent);border-color:var(--c-donker)}
 .knop-donker{background:var(--c-donker);color:var(--c-accent);border-color:var(--c-donker)}
@@ -141,7 +145,7 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
         <div style="display: flex; flex-direction: column; gap: 20px">
           <h2 data-k="avond-titel" style="margin: 0; font-family: var(--font-kop); font-weight: 500; font-size: calc(clamp(2.2rem, 4.6vw, 3.2rem) * var(--fs,1)); line-height: 1.1">Binnenkort lees je hier alles over de eerste avond.</h2>
           <p data-k="avond-tekst" style="margin: 0; font-size: calc(1rem * var(--fs,1)); line-height: 1.75; color: var(--c-tekst-licht)">Wanneer, waar en waarover: zodra het vaststaat, staat het op deze pagina. Wil je het als eerste weten? Laat je e-mailadres achter.</p>
-                    <div class="knoppen"><a class="knop" data-k="avond-knop" href="#contact" style="font-size: calc(0.72rem * var(--fs,1))">Houd me op de hoogte</a><a class="knop knop-donker" data-k="avond-knop-2" data-l="link-samenwerken" href="/samenwerken" style="font-size: calc(0.72rem * var(--fs,1))">Wil je samenwerken?</a></div>
+                    <div class="knoppen knoppen-paar"><a class="knop" data-k="avond-knop" href="#contact" style="font-size: calc(0.72rem * var(--fs,1))">Houd me op de hoogte</a><a class="knop knop-donker" data-k="avond-knop-2" data-l="link-samenwerken" href="/samenwerken" style="font-size: calc(0.72rem * var(--fs,1))">Wil je samenwerken?</a></div>
         </div>
       </div>
     </div>

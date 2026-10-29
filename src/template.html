@@ -1,10 +1,9 @@
 <!doctype html><html lang="nl"><head><meta charset="utf-8"><title>Het Groeikwartier</title><meta name="description" content="Avonden en cursussen in het Soesterkwartier voor iedereen die om een kind heen staat."><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&amp;family=Nunito+Sans:wght@300;400;600;700&amp;display=swap">
+<link rel="stylesheet" href="/fonts/fonts.css">
 <style>
 :root{--c-hoofd:#596E6E;--c-donker:#202B2D;--c-accent:#ACB3AC;--c-zand:#B7B1A6;--c-achtergrond:#F2F2EE;--c-hero:#FAFAF7;--c-contact:#DCDDD7;--c-tekst:#2B3638;--c-tekst-zacht:#4F5B5C;--c-tekst-licht:#E3E7E4;--c-kaart:#FFFFFF}
-:root{--font-kop:'Cormorant Garamond', serif;--font-tekst:'Avenir Next','Avenir','Nunito Sans',sans-serif}
+:root{--font-kop:'Instrument Serif', 'Cormorant Garamond', serif;--font-tekst:'Avenir Next','Avenir','Nunito Sans',sans-serif}
 html,body{margin:0;background:var(--c-achtergrond);color:var(--c-tekst)}
 [data-k]{--fs:1}
 .m-toggle[aria-expanded="true"] svg{transform:rotate(180deg)}
@@ -72,17 +71,21 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
 /* Lege tekstblokken nemen geen ruimte in */
 [data-k]:empty{display:none}
 /* Links in teksten: zelfde kleur als de tekst, bij aanwijzen donkerblauw */
-[data-k] a,a[data-l]:not(.knop){color:inherit;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;transition:color .15s}
-[data-k] a:hover,[data-k] a:focus-visible,a[data-l]:not(.knop):hover,a[data-l]:not(.knop):focus-visible{color:var(--c-donker)}
+/* De aanwijskleur hangt af van de achtergrond: op licht de hoofdkleur, op de hoofdkleur en zand donkerblauw, op donkerblauw de accentkleur. */
+:root{--link-hover:var(--c-hoofd)}
+.op-hoofd,.b-panel,#agenda{--link-hover:var(--c-donker)}
+.op-donker{--link-hover:var(--c-accent)}
+[data-k] a,a[data-l]:not(.knop),a.tekstlink{color:inherit;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;transition:color .15s}
+[data-k] a:hover,[data-k] a:focus-visible,a[data-l]:not(.knop):hover,a[data-l]:not(.knop):focus-visible,a.tekstlink:hover,a.tekstlink:focus-visible{color:var(--link-hover)}
 /* Knoppen: bij aanwijzen wisselen achtergrond en tekst */
 .knoppen{display:flex;flex-wrap:wrap;gap:12px}
 .knop{display:inline-block;background:var(--c-accent);color:var(--c-donker);border:2px solid var(--c-accent);text-decoration:none;padding:12px 24px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;transition:background-color .2s,color .2s,border-color .2s}
 .knop:hover,.knop:focus-visible{background:var(--c-donker);color:var(--c-accent);border-color:var(--c-donker)}
-.knop-rand{background:transparent;color:var(--c-achtergrond);border-color:var(--c-accent)}
-.knop-rand:hover,.knop-rand:focus-visible{background:var(--c-accent);color:var(--c-donker);border-color:var(--c-accent)}
+.knop-donker{background:var(--c-donker);color:var(--c-accent);border-color:var(--c-donker)}
+.knop-donker:hover,.knop-donker:focus-visible{background:var(--c-accent);color:var(--c-donker);border-color:var(--c-accent)}
 .knop-vol{background:var(--c-hoofd);color:var(--c-achtergrond);border-color:var(--c-hoofd)}
 .knop-vol:hover,.knop-vol:focus-visible{background:var(--c-donker);color:var(--c-achtergrond);border-color:var(--c-donker)}
-@media (prefers-reduced-motion: reduce){.knop,[data-k] a,a[data-l]{transition:none}}
+@media (prefers-reduced-motion: reduce){.knop,[data-k] a,a[data-l],a.tekstlink{transition:none}}
 
 </style>
 
@@ -128,14 +131,14 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
   </section>
 
   <!-- Eerste avond + agenda -->
-  <section style="background: var(--c-hoofd); color: var(--c-achtergrond)">
+  <section class="op-hoofd" style="background: var(--c-hoofd); color: var(--c-achtergrond)">
     <div style="max-width: 1040px; margin: 0 auto; padding: 88px 24px; display: flex; flex-direction: column; gap: 56px">
       <div class="m-split">
         <div data-img="foto-avond" data-ph style="background-size: cover; background-position: center; aspect-ratio: 4 / 5; background: color-mix(in srgb, var(--c-hoofd) 85%, #000); display: flex; align-items: center; justify-content: center; color: color-mix(in srgb, var(--c-accent) 70%, #fff); font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; text-align: center; padding: 20px">[Sfeerfoto avond]</div>
         <div style="display: flex; flex-direction: column; gap: 20px">
           <h2 data-k="avond-titel" style="margin: 0; font-family: var(--font-kop); font-weight: 500; font-size: calc(clamp(2.2rem, 4.6vw, 3.2rem) * var(--fs,1)); line-height: 1.1">Binnenkort lees je hier alles over de eerste avond.</h2>
           <p data-k="avond-tekst" style="margin: 0; font-size: calc(1rem * var(--fs,1)); line-height: 1.75; color: var(--c-tekst-licht)">Wanneer, waar en waarover: zodra het vaststaat, staat het op deze pagina. Wil je het als eerste weten? Laat je e-mailadres achter.</p>
-                    <div class="knoppen"><a class="knop" data-k="avond-knop" href="#contact" style="font-size: calc(0.72rem * var(--fs,1))">Houd me op de hoogte</a><a class="knop knop-rand" data-k="avond-knop-2" data-l="link-samenwerken" href="/samenwerken" style="font-size: calc(0.72rem * var(--fs,1))">Wil je samenwerken?</a></div>
+                    <div class="knoppen"><a class="knop" data-k="avond-knop" href="#contact" style="font-size: calc(0.72rem * var(--fs,1))">Houd me op de hoogte</a><a class="knop knop-donker" data-k="avond-knop-2" data-l="link-samenwerken" href="/samenwerken" style="font-size: calc(0.72rem * var(--fs,1))">Wil je samenwerken?</a></div>
         </div>
       </div>
     </div>
@@ -154,7 +157,7 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
   </section>
 
   <!-- Over het Groeikwartier + Wie zijn wij -->
-  <section id="wij" style="background: var(--c-donker); color: var(--c-achtergrond); scroll-margin-top: 110px">
+  <section id="wij" class="op-donker" style="background: var(--c-donker); color: var(--c-achtergrond); scroll-margin-top: 110px">
     <div style="max-width: 900px; margin: 0 auto; padding: 88px 24px; display: flex; flex-direction: column; gap: 64px">
 
       <div class="b-panel" style="display: flex; flex-direction: column; gap: 18px">
@@ -213,6 +216,7 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
         <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px">
         </form>
         <p data-signup-msg role="status" style="margin: 0; font-size: 0.9rem; min-height: 1.4em"></p>
+        <p data-k="contact-privacy" style="margin: 0; max-width: 34em; font-size: calc(0.8rem * var(--fs,1)); line-height: 1.6; color: var(--c-tekst-zacht)">We gebruiken je e-mailadres alleen voor onze berichten. Afmelden kan altijd, via de link in elk bericht of <a href="/afmelden">hier</a>. Lees ook onze <a href="/privacy">privacyverklaring</a>.</p>
         <div style="width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 20px; margin-top: 20px; padding-top: 28px; border-top: 1px solid var(--c-contact)">
           <div><p data-k="contact-kop-mail" style="margin: 0 0 4px; font-size: calc(0.68rem * var(--fs,1)); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--c-hoofd)">Mail</p><a data-l="link-mail" data-k="contact-mail" href="mailto:hetgroeikwartier@gmail.com" style="font-size: calc(0.95rem * var(--fs,1)); overflow-wrap: anywhere">hetgroeikwartier@gmail.com</a></div>
           <div><p data-k="contact-kop-insta" style="margin: 0 0 4px; font-size: calc(0.68rem * var(--fs,1)); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--c-hoofd)">Instagram</p><a data-l="link-instagram" data-k="contact-instagram" href="[INSTAGRAM-LINK]" style="font-size: calc(0.95rem * var(--fs,1))">@[INSTAGRAM]</a></div>
@@ -224,10 +228,13 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
 
   <!-- inhoud:eind -->
 
-  <footer style="background: var(--c-donker); text-align: center; padding: 32px 20px; display: flex; flex-direction: column; gap: 10px; align-items: center">
+  <footer class="op-donker" style="background: var(--c-donker); text-align: center; padding: 32px 20px; display: flex; flex-direction: column; gap: 10px; align-items: center">
     <img data-img="woordmerk" src="/wordmark-licht.png" alt="Het Groeikwartier" style="display: block; height: calc(28px * var(--fs,1)); width: auto">
-    <span data-k="footer-tekst" style="font-size: calc(0.72rem * var(--fs,1)); letter-spacing: 0.2em; text-transform: uppercase; color: var(--c-zand)">It takes a village to raise a child</span>
-    <span data-jaar style="font-size: 0.72rem; color: color-mix(in srgb, var(--c-zand) 70%, var(--c-donker))">© Het Groeikwartier</span>
+    <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 18px; font-size: 0.75rem; color: color-mix(in srgb, var(--c-zand) 80%, var(--c-donker))">
+      <span data-jaar>© Het Groeikwartier</span>
+      <a class="tekstlink" href="/privacy">Privacyverklaring</a>
+      <a class="tekstlink" href="/afmelden">Afmelden nieuwsbrief</a>
+    </div>
   </footer>
 
 </div>

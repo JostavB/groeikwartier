@@ -1,5 +1,5 @@
 // Editor voor het Groeikwartier. Draait op /admin, bovenop de echte pagina.
-import { FONTS_KOP, FONTS_TEKST, fontLink, agendaHTML, KLEUREN, DEFAULT_AGENDA, KLEURVELDEN } from './shared.js';
+import { FONTS_KOP, FONTS_TEKST, STANDAARD_KOP, STANDAARD_TEKST, ZONDER_CURSIEF, agendaHTML, KLEUREN, DEFAULT_AGENDA, KLEURVELDEN } from './shared.js';
 
 const GK = window.GK || {};
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -26,7 +26,7 @@ function normalize(c) {
     sizes: { ...(c.sizes || {}) },
     images: { ...(c.images || {}) },
     links: { ...(c.links || {}) },
-    fonts: { kop: 'Cormorant Garamond', tekst: 'Avenir', ...(c.fonts || {}) },
+    fonts: { kop: STANDAARD_KOP, tekst: STANDAARD_TEKST, ...(c.fonts || {}) },
     colors: { ...(c.colors || {}) },
     agenda: JSON.parse(JSON.stringify(c.agenda ?? DEFAULT_AGENDA)),
     meta: c.meta || null,
@@ -368,7 +368,7 @@ function openPanel(kind) {
 function fontsPanel(body) {
   const sel = (label, list, key) => {
     const s = h('select', { class: 'gk-input', id: 'gk-font-' + key },
-      ...Object.keys(list).map((n) => h('option', { value: n, selected: content.fonts[key] === n }, n === 'Avenir' ? 'Avenir (standaard)' : n)));
+      ...Object.keys(list).map((n) => h('option', { value: n, selected: content.fonts[key] === n }, n === STANDAARD_TEKST || n === STANDAARD_KOP ? n + ' (standaard)' : n)));
     s.addEventListener('change', () => { content.fonts[key] = s.value; applyFonts(); setDirty(); });
     return h('label', { class: 'gk-field', for: 'gk-font-' + key }, h('span', {}, label), s);
   };
@@ -376,6 +376,7 @@ function fontsPanel(body) {
     h('h3', { class: 'gk-sub' }, 'Lettertypen'),
     h('p', { class: 'gk-help' }, 'Kies een lettertype voor de koppen en een voor de lopende tekst. Tekstgrootte pas je per tekst aan met A− en A+ in de werkbalk boven de tekst.'),
     sel('Koppen', FONTS_KOP, 'kop'),
+    h('p', { class: 'gk-help', id: 'gk-font-note' }),
     sel('Tekst', FONTS_TEKST, 'tekst'),
     h('h3', { class: 'gk-sub' }, 'Kleuren'),
     h('p', { class: 'gk-help' }, 'Je ziet een wijziging meteen op de pagina. Pas na Publiceren is hij live. Tinten die van deze kleuren zijn afgeleid, zoals lichtere randjes, schuiven automatisch mee.'),
@@ -427,14 +428,10 @@ function applyColors() {
 
 function applyFonts() {
   const root = document.documentElement.style;
-  root.setProperty('--font-kop', FONTS_KOP[content.fonts.kop] || FONTS_KOP['Cormorant Garamond']);
-  root.setProperty('--font-tekst', FONTS_TEKST[content.fonts.tekst] || FONTS_TEKST.Avenir);
-  const link = fontLink([content.fonts.kop, content.fonts.tekst]);
-  if (link) {
-    const tmp = h('div'); tmp.innerHTML = link;
-    const href = tmp.firstChild.href;
-    if (!$$('link[rel=stylesheet]').some((l) => l.href === href)) document.head.append(tmp.firstChild);
-  }
+  root.setProperty('--font-kop', FONTS_KOP[content.fonts.kop] || FONTS_KOP[STANDAARD_KOP]);
+  root.setProperty('--font-tekst', FONTS_TEKST[content.fonts.tekst] || FONTS_TEKST[STANDAARD_TEKST]);
+  const note = document.getElementById('gk-font-note');
+  if (note) note.textContent = ZONDER_CURSIEF.has(content.fonts.kop) ? 'Dit lettertype heeft geen eigen cursief; quotes worden schuin gezet.' : '';
 }
 
 function renderAgenda() {
@@ -543,23 +540,42 @@ async function berichtenPanel(body) {
 }
 
 async function signupsPanel(body) {
-  body.append(h('p', { class: 'gk-help' }, 'Mensen die zich via de site hebben aangemeld voor berichten.'));
+  body.append(h('p', { class: 'gk-help' }, 'Mensen die zich via de site hebben aangemeld voor berichten. Download de lijst om hem in een nieuwsbriefprogramma te importeren. Iedereen heeft een eigen afmeldlink; zet die onderaan elk bericht. Wie zich afmeldt, wordt hier meteen verwijderd.'));
   const box = h('div', {}, 'Laden…');
   body.append(box);
   try {
     const list = await api('/api/admin/signups');
     box.textContent = '';
     if (!list.length) { box.append(h('p', {}, 'Nog geen aanmeldingen.')); return; }
-    const all = list.map((s) => s.email).join(', ');
-    const copy = h('button', { class: 'gk-btn gk-primary', type: 'button' }, `Kopieer ${list.length} adressen`);
-    copy.addEventListener('click', async () => {
-      try { await navigator.clipboard.writeText(all); copy.textContent = 'Gekopieerd'; } catch { ta.hidden = false; ta.select(); }
+    const csv = () => {
+      const q = (v) => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+      return '﻿' + ['email;aangemeld_op;afmeldlink', ...list.map((x) => [x.email, x.at, x.afmeldlink].map(q).join(';'))].join('\r\n');
+    };
+    const dl = h('button', { class: 'gk-btn gk-primary', type: 'button' }, `Download ${list.length} adressen (CSV)`);
+    dl.addEventListener('click', () => {
+      const a = h('a', { href: URL.createObjectURL(new Blob([csv()], { type: 'text/csv;charset=utf-8' })), download: 'aanmeldingen-groeikwartier-' + GK.today + '.csv' });
+      panel.append(a); a.click(); a.remove();
     });
-    const ta = h('textarea', { class: 'gk-input', readonly: true, hidden: true, rows: 4 }); ta.value = all;
-    box.append(copy, ta, h('table', { class: 'gk-table' },
-      h('thead', {}, h('tr', {}, h('th', {}, 'E-mail'), h('th', {}, 'Aangemeld'))),
-      h('tbody', {}, ...list.map((s) => h('tr', {}, h('td', {}, s.email), h('td', {}, fmtDate(s.at))))),
-    ));
+    const copy = h('button', { class: 'gk-btn', type: 'button' }, 'Kopieer adressen');
+    const ta = h('textarea', { class: 'gk-input', readonly: true, hidden: true, rows: 4 });
+    ta.value = list.map((x) => x.email).join(', ');
+    copy.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(ta.value); copy.textContent = 'Gekopieerd'; } catch { ta.hidden = false; ta.select(); }
+    });
+    const tbody = h('tbody');
+    for (const x of list) {
+      const del = h('button', { class: 'gk-btn gk-danger gk-small', type: 'button' }, 'Verwijderen');
+      const row = h('tr', {}, h('td', { class: 'gk-copyable' }, x.email), h('td', {}, fmtDate(x.at)), h('td', {}, del));
+      del.addEventListener('click', async () => {
+        if (!del.dataset.sure) { del.dataset.sure = '1'; del.textContent = 'Zeker?'; setTimeout(() => { delete del.dataset.sure; del.textContent = 'Verwijderen'; }, 3000); return; }
+        del.disabled = true;
+        try { await api('/api/admin/signup-verwijderen', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: x.email }) }); row.remove(); }
+        catch (e) { del.disabled = false; del.textContent = e.message; }
+      });
+      tbody.append(row);
+    }
+    box.append(h('div', { class: 'gk-row' }, dl, copy), ta, h('table', { class: 'gk-table' },
+      h('thead', {}, h('tr', {}, h('th', {}, 'E-mail'), h('th', {}, 'Aangemeld'), h('th', {}, ''))), tbody));
   } catch (e) { box.textContent = e.message; }
 }
 

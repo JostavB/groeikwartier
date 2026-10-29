@@ -1,7 +1,16 @@
 // Gedeeld tussen de server (src/index.js) en de editor (public/admin/editor.js):
 // lettertypen en het opbouwen van agendakaarten.
 
+export const STANDAARD_KOP = 'Instrument Serif';
+export const STANDAARD_TEKST = 'Avenir';
+
+// Alle lettertypen staan op de eigen server (public/fonts/fonts.css), dus geen verzoeken naar Google.
 export const FONTS_KOP = {
+  'Instrument Serif': "'Instrument Serif', 'Cormorant Garamond', serif",
+  'Bodoni Moda': "'Bodoni Moda', serif",
+  'Gilda Display': "'Gilda Display', serif",
+  'Bellefair': "'Bellefair', serif",
+  'Antic Didone': "'Antic Didone', serif",
   'Cormorant Garamond': "'Cormorant Garamond', serif",
   'Playfair Display': "'Playfair Display', serif",
   'Lora': "'Lora', serif",
@@ -18,17 +27,10 @@ export const FONTS_TEKST = {
   'Karla': "'Karla',sans-serif",
 };
 
-// Al geladen door het sjabloon zelf.
-const PRELOADED = new Set(['Cormorant Garamond', 'Nunito Sans', 'Avenir']);
+// Lettertypen zonder eigen cursieve variant (quotes worden dan schuin gezet door de browser).
+export const ZONDER_CURSIEF = new Set(['Gilda Display', 'Bellefair', 'Antic Didone']);
 
-export function fontLink(names) {
-  const fams = names.filter((n) => n && !PRELOADED.has(n));
-  if (!fams.length) return '';
-  const q = fams
-    .map((n) => 'family=' + n.replace(/ /g, '+') + ':ital,wght@0,400;0,500;0,600;0,700;1,400')
-    .join('&');
-  return `<link rel="stylesheet" href="https://fonts.googleapis.com/css2?${q}&display=swap">`;
-}
+export function fontLink() { return ''; }
 
 // Instelbare kleuren van de site. Sleutel = CSS-variabele --c-<sleutel>.
 export const KLEURVELDEN = [

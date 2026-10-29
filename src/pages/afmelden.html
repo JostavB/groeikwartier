@@ -1,0 +1,53 @@
+  <!-- Pagina: afmelden voor berichten. Werkt met een persoonlijke link (?t=...) of door je e-mailadres in te vullen. -->
+  <section id="top" class="b-hero">
+    <div class="m-topline" aria-hidden="true"></div>
+    <div class="b-hero-inner" style="gap: 20px">
+      <p data-k="af-label" style="margin: 0; display: inline-block; background: var(--c-achtergrond); padding: 6px 12px; font-size: calc(0.7rem * var(--fs,1)); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--c-hoofd)">Berichten</p>
+      <h1 data-k="af-titel" style="margin: 0; font-family: var(--font-kop); font-weight: 500; font-size: calc(clamp(2.4rem, 5.5vw, 3.6rem) * var(--fs,1)); line-height: 1.08; color: var(--c-donker); text-wrap: balance">Afmelden</h1>
+      <p data-k="af-intro" class="b-intro">Wil je geen berichten meer van ons ontvangen? Meld je hieronder af. Je e-mailadres wordt dan direct verwijderd.</p>
+
+      <form data-afmelden class="af-form" novalidate>
+        <div class="af-email">
+          <label for="af-mail">E-mailadres</label>
+          <input id="af-mail" name="email" type="email" autocomplete="email" maxlength="200" placeholder="naam@voorbeeld.nl">
+        </div>
+        <p class="af-persoonlijk" hidden>Je meldt je af met de link uit ons bericht.</p>
+        <button class="knop knop-vol" data-k="af-knop" type="submit" style="font-family: inherit; padding: 0 26px; min-height: 48px; font-size: calc(0.72rem * var(--fs,1))">Afmelden</button>
+        <p data-af-msg role="status" style="margin: 0; font-size: 0.95rem; min-height: 1.5em"></p>
+      </form>
+      <p data-k="af-weer" style="margin: 0; font-size: calc(0.9rem * var(--fs,1)); color: var(--c-tekst-zacht)">Toch weer berichten ontvangen? Meld je opnieuw aan <a href="/#contact">op de homepage</a>.</p>
+    </div>
+  </section>
+
+  <style>
+    .af-form { width: 100%; max-width: 460px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+    .af-email { width: 100%; display: flex; flex-direction: column; gap: 6px; text-align: left; }
+    .af-email label { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; color: var(--c-tekst-zacht); }
+    .af-email input { font: inherit; font-size: 0.98rem; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--c-accent) 70%, #fff); background: var(--c-kaart); color: var(--c-donker); width: 100%; box-sizing: border-box; min-height: 48px; }
+    .af-email input:focus-visible { outline: 2px solid var(--c-hoofd); outline-offset: 1px; }
+    .af-persoonlijk { margin: 0; color: var(--c-tekst-zacht); }
+  </style>
+  <script>
+  (function () {
+    if (document.documentElement.hasAttribute('data-admin')) return;
+    var f = document.querySelector('form[data-afmelden]');
+    if (!f) return;
+    var msg = f.querySelector('[data-af-msg]'), btn = f.querySelector('button[type=submit]');
+    var token = new URLSearchParams(location.search).get('t') || '';
+    if (/^[a-z0-9]{32}$/.test(token)) {
+      f.querySelector('.af-email').hidden = true;
+      f.querySelector('.af-persoonlijk').hidden = false;
+      history.replaceState(null, '', location.pathname);
+    } else token = '';
+    f.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var email = f.elements.email.value.trim();
+      if (!token && !f.elements.email.checkValidity() || (!token && !email)) { msg.style.color = '#A2453B'; msg.textContent = 'Vul een geldig e-mailadres in.'; f.elements.email.focus(); return; }
+      btn.disabled = true; msg.style.color = ''; msg.textContent = 'Bezig…';
+      fetch('/api/afmelden', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(token ? { token: token } : { email: email }) })
+        .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Afmelden lukte niet.'); }); })
+        .then(function () { f.reset(); msg.style.color = '#3F6B5C'; msg.textContent = 'Je bent afgemeld. Je ontvangt geen berichten meer van ons.'; btn.hidden = true; })
+        .catch(function (err) { msg.style.color = '#A2453B'; msg.textContent = err.message; btn.disabled = false; });
+    });
+  })();
+  </script>

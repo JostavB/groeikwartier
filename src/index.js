@@ -6,7 +6,9 @@
 import TEMPLATE from './template.html';
 import LOGIN_PAGE from './login.html';
 import PAGE_SAMENWERKEN from './pages/samenwerken.html';
-import { FONTS_KOP, FONTS_TEKST, fontLink, agendaHTML, DEFAULT_AGENDA, esc, KLEURVELDEN, kleurCSS } from '../public/admin/shared.js';
+import PAGE_PRIVACY from './pages/privacy.html';
+import PAGE_AFMELDEN from './pages/afmelden.html';
+import { FONTS_KOP, FONTS_TEKST, STANDAARD_KOP, STANDAARD_TEKST, agendaHTML, DEFAULT_AGENDA, esc, KLEURVELDEN, kleurCSS } from '../public/admin/shared.js';
 
 const CONTENT_KEY = 'content';
 const HIST_PREFIX = 'hist:';
@@ -14,6 +16,7 @@ const HIST_KEEP = 30;
 const MEDIA_PREFIX = 'media:';
 const SIGNUP_PREFIX = 'signup:';
 const MSG_PREFIX = 'samen:';
+const UNSUB_PREFIX = 'afmeld:';
 const SESSION_PREFIX = 'sess:';
 const SESSION_COOKIE = '__Host-gk_sessie';
 const SESSION_TTL = 12 * 60 * 60; // 12 uur
@@ -23,6 +26,8 @@ const MAX_UPLOAD = 10 * 1024 * 1024;
 const PAGES = {
   home: { path: '/', title: null, body: null },
   samenwerken: { path: '/samenwerken', title: 'Samenwerken · Het Groeikwartier', body: PAGE_SAMENWERKEN },
+  privacy: { path: '/privacy', title: 'Privacyverklaring · Het Groeikwartier', body: PAGE_PRIVACY },
+  afmelden: { path: '/afmelden', title: 'Afmelden · Het Groeikwartier', body: PAGE_AFMELDEN },
 };
 
 function pageHTML(name) {
@@ -63,7 +68,10 @@ async function route(request, env, ctx) {
   }
 
   if ((path === '/' || path === '/index.html') && method === 'GET') return renderPage(env, url, false);
-  if ((path === '/samenwerken' || path === '/samenwerken/') && method === 'GET') return renderPage(env, url, false, null, 'samenwerken');
+  if (method === 'GET') {
+    const naam = Object.keys(PAGES).find((k) => k !== 'home' && (path === PAGES[k].path || path === PAGES[k].path + '/'));
+    if (naam) return renderPage(env, url, false, null, naam);
+  }
   // ---- beheer: alles onder /admin is afgeschermd, behalve het inlogscherm zelf ----
   if ((path === '/admin' || path === '/admin/') && method === 'GET') {
     if (await getSession(request, env)) return redirect('/admin/editor');
@@ -94,6 +102,7 @@ async function route(request, env, ctx) {
     return json(c.agenda ?? DEFAULT_AGENDA, 200, { 'cache-control': 'public, max-age=60', 'access-control-allow-origin': '*' });
   }
   if (path === '/api/signup' && method === 'POST') return signup(request, env);
+  if (path === '/api/afmelden' && method === 'POST') return unsubscribe(request, env);
   if (path === '/api/samenwerken' && method === 'POST') return samenwerken(request, env);
   if (path === '/api/sync/agenda' && method === 'PUT') return syncAgenda(request, env);
 
@@ -124,15 +133,15 @@ async function renderPage(env, url, admin, user = null, page = 'home') {
   const images = c.images || {};
   const links = c.links || {};
   const fonts = c.fonts || {};
-  const kop = FONTS_KOP[fonts.kop] ? fonts.kop : 'Cormorant Garamond';
-  const tekst = FONTS_TEKST[fonts.tekst] ? fonts.tekst : 'Avenir';
+  const kop = FONTS_KOP[fonts.kop] ? fonts.kop : STANDAARD_KOP;
+  const tekst = FONTS_TEKST[fonts.tekst] ? fonts.tekst : STANDAARD_TEKST;
 
   let css = `:root{--font-kop:${FONTS_KOP[kop]};--font-tekst:${FONTS_TEKST[tekst]}}` + kleurCSS(c.colors);
   for (const [k, v] of Object.entries(sizes)) {
     const n = Number(v);
     if (/^[a-z0-9-]+$/.test(k) && n >= 0.5 && n <= 3 && n !== 1) css += `[data-k="${k}"]{--fs:${n}}`;
   }
-  let head = fontLink([kop, tekst]) + `<style id="gk-overrides">${css}</style>`;
+  let head = `<style id="gk-overrides">${css}</style>`;
   if (admin) {
     const cfg = {
       clientId: env.GOOGLE_CLIENT_ID || '',
@@ -456,10 +465,26 @@ async function adminApi(request, env, sub, method, user) {
     let cursor;
     do {
       const l = await env.CONTENT.list({ prefix: SIGNUP_PREFIX, cursor });
-      for (const k of l.keys) out.push({ email: k.metadata?.email, at: k.metadata?.at });
+      for (const k of l.keys) {
+        let { email, at, token } = k.metadata || {};
+        if (email && !token) {
+          // Oudere aanmelding: alsnog een persoonlijke afmeldcode geven.
+          token = randomId(32);
+          await env.CONTENT.put(k.name, JSON.stringify({ email, at, token, bron: 'website' }), { metadata: { email, at, token } });
+          await env.CONTENT.put(UNSUB_PREFIX + token, k.name);
+        }
+        out.push({ email, at, afmeldlink: token ? `${new URL(request.url).origin}/afmelden?t=${token}` : '' });
+      }
       cursor = l.list_complete ? null : l.cursor;
     } while (cursor);
     return json(out.reverse());
+  }
+
+  if (sub === 'signup-verwijderen' && method === 'POST') {
+    const { email } = await readJson(request, 500);
+    if (typeof email !== 'string' || !email.includes('@')) throw new HttpError(400, 'Onbekend adres.');
+    await removeSignup(env, await signupKey(email.trim().toLowerCase()));
+    return json({ ok: true });
   }
 
   if (sub === 'berichten' && method === 'GET') {
@@ -524,14 +549,45 @@ function cleanAgenda(list) {
 
 // ---------- aanmelden nieuwsbrief ----------
 
+async function signupKey(email) {
+  return SIGNUP_PREFIX + (await sha(email)).slice(0, 24);
+}
+
+// Aanmelden: e-mailadres + moment van aanmelden (bewijs van toestemming) + persoonlijke afmeldcode.
 async function signup(request, env) {
   const body = await readJson(request, 2000);
   if (body.website) return json({ ok: true }); // honeypot
   const email = String(body.email || '').trim().toLowerCase();
   if (!/^[^\s@<>]{1,64}@[^\s@<>]{1,190}\.[a-z]{2,}$/i.test(email)) throw new HttpError(400, 'Vul een geldig e-mailadres in.');
-  const key = SIGNUP_PREFIX + (await sha(email)).slice(0, 24);
+  const key = await signupKey(email);
   const exists = await env.CONTENT.get(key);
-  if (!exists) await env.CONTENT.put(key, '1', { metadata: { email, at: new Date().toISOString() } });
+  if (!exists) {
+    const token = randomId(32);
+    const at = new Date().toISOString();
+    await env.CONTENT.put(key, JSON.stringify({ email, at, token, bron: 'website' }), { metadata: { email, at, token } });
+    await env.CONTENT.put(UNSUB_PREFIX + token, key);
+  }
+  return json({ ok: true });
+}
+
+async function removeSignup(env, key) {
+  const v = await env.CONTENT.get(key, 'json').catch(() => null);
+  if (v?.token) await env.CONTENT.delete(UNSUB_PREFIX + v.token);
+  await env.CONTENT.delete(key);
+}
+
+// Afmelden met persoonlijke link (token) of met e-mailadres. Altijd hetzelfde antwoord,
+// zodat niemand kan nagaan of een adres bij ons bekend is.
+async function unsubscribe(request, env) {
+  const body = await readJson(request, 1000);
+  if (typeof body.token === 'string' && /^[a-z0-9]{32}$/.test(body.token)) {
+    const key = await env.CONTENT.get(UNSUB_PREFIX + body.token);
+    if (key) await removeSignup(env, key);
+    return json({ ok: true });
+  }
+  const email = String(body.email || '').trim().toLowerCase();
+  if (!/^[^\s@<>]{1,64}@[^\s@<>]{1,190}\.[a-z]{2,}$/i.test(email)) throw new HttpError(400, 'Vul een geldig e-mailadres in.');
+  await removeSignup(env, await signupKey(email));
   return json({ ok: true });
 }
 

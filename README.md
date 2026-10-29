@@ -10,6 +10,9 @@ Website van het Groeikwartier, met een eigen editor op `/admin`.
 - `/admin` is alleen een inlogscherm (`src/login.html`). Na inloggen met Google controleert de server het token en de lijst `ADMIN_EMAILS` (in `wrangler.jsonc`) en zet een sessiecookie (HttpOnly, 12 uur, sessie in KV). Pas dan levert de server `/admin/editor` en de editorbestanden uit; zonder sessie krijg je ze niet te zien.
 - Aanmeldingen voor de nieuwsbrief komen in KV en staan in de editor onder **Aanmeldingen**.
 - Extra pagina's staan in `src/pages/` (nu: `samenwerken.html` op `/samenwerken`). Ze delen menu en voet met de homepage (alles buiten `<!-- inhoud:start -->` … `<!-- inhoud:eind -->` in het sjabloon). In de editor kies je de pagina linksboven. Formulierberichten staan onder **Berichten**.
+- Pagina's: `/samenwerken`, `/privacy` (privacyverklaring) en `/afmelden` (afmelden voor berichten, met e-mailadres of persoonlijke link `?t=...`).
+- Lettertypen staan op de eigen server (`public/fonts/`, via Fontsource, SIL OFL); er gaan geen verzoeken naar Google Fonts.
+- Aanmeldingen: e-mail, tijdstip en een persoonlijke afmeldcode. In de editor te downloaden als CSV (met afmeldlink per adres) en per adres te verwijderen.
 - Witregels worden bij opslaan en tonen opgeschoond: hoogstens één lege regel achter elkaar; lege tekstblokken worden niet getoond.
 
 ## Agenda koppelen (later)

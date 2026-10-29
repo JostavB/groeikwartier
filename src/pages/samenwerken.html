@@ -1,0 +1,97 @@
+  <!-- Pagina: samenwerken. Kop en voet komen uit src/template.html. -->
+  <section id="top" class="b-hero">
+    <div class="m-topline" aria-hidden="true"></div>
+    <div class="b-hero-inner" style="gap: 20px">
+      <p data-k="samen-label" style="margin: 0; display: inline-block; background: var(--c-achtergrond); padding: 6px 12px; font-size: calc(0.7rem * var(--fs,1)); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--c-hoofd)">Samenwerken</p>
+      <h1 data-k="samen-titel" style="margin: 0; font-family: var(--font-kop); font-weight: 500; font-size: calc(clamp(2.4rem, 5.5vw, 3.6rem) * var(--fs,1)); line-height: 1.08; color: var(--c-donker); text-wrap: balance">Wil je met ons samenwerken?</h1>
+      <p data-k="samen-intro" class="b-intro">Ben je expert op een thema dat gezinnen raakt, wil je een avond mogelijk maken of heb je een plek in de wijk? We horen graag van je. Vertel kort wie je bent en waar je aan denkt, dan nemen we contact met je op.</p>
+    </div>
+  </section>
+
+  <section id="formulier" style="background-color: var(--c-contact); background-image: radial-gradient(ellipse 70% 60% at 15% 20%, rgba(255,255,255,0.55), transparent 70%), radial-gradient(ellipse 60% 50% at 85% 85%, color-mix(in srgb, var(--c-hoofd) 35%, transparent), transparent 70%); scroll-margin-top: 110px">
+    <div style="max-width: 760px; margin: 0 auto; padding: 72px 20px 88px">
+      <div style="background: var(--c-kaart); border: 1px solid var(--c-zand); padding: clamp(28px, 6vw, 52px); display: flex; flex-direction: column; gap: 22px">
+        <h2 data-k="samen-form-titel" style="margin: 0; font-family: var(--font-kop); font-weight: 500; font-size: calc(clamp(2rem, 4vw, 2.6rem) * var(--fs,1)); color: var(--c-donker)">Vertel ons over jezelf</h2>
+        <form data-samen class="samen-form" novalidate>
+          <div class="samen-rij">
+            <div class="samen-veld">
+              <label data-k="samen-l-naam" for="s-naam">Naam</label>
+              <input id="s-naam" name="naam" type="text" required autocomplete="name" maxlength="120">
+            </div>
+            <div class="samen-veld">
+              <label data-k="samen-l-mail" for="s-mail">E-mailadres</label>
+              <input id="s-mail" name="email" type="email" required autocomplete="email" maxlength="200">
+            </div>
+          </div>
+          <div class="samen-rij">
+            <div class="samen-veld">
+              <label data-k="samen-l-org" for="s-org">Organisatie of vakgebied <span class="samen-opt">(optioneel)</span></label>
+              <input id="s-org" name="organisatie" type="text" autocomplete="organization" maxlength="160">
+            </div>
+            <div class="samen-veld">
+              <label data-k="samen-l-tel" for="s-tel">Telefoon <span class="samen-opt">(optioneel)</span></label>
+              <input id="s-tel" name="telefoon" type="tel" autocomplete="tel" maxlength="40">
+            </div>
+          </div>
+          <div class="samen-veld">
+            <label data-k="samen-l-soort" for="s-soort">Waar denk je aan?</label>
+            <select id="s-soort" name="soort">
+              <option>Een avond verzorgen als expert</option>
+              <option>Sponsor of partner worden</option>
+              <option>Een locatie aanbieden</option>
+              <option>Iets anders</option>
+            </select>
+          </div>
+          <div class="samen-veld">
+            <label data-k="samen-l-bericht" for="s-bericht">Je bericht</label>
+            <textarea id="s-bericht" name="bericht" rows="6" required maxlength="4000"></textarea>
+          </div>
+          <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px">
+          <div class="knoppen" style="align-items: center">
+            <button class="knop knop-vol" data-k="samen-knop" type="submit" style="font-family: inherit; padding: 0 26px; min-height: 48px; font-size: calc(0.72rem * var(--fs,1))">Versturen</button>
+            <p data-samen-msg role="status" style="margin: 0; font-size: 0.92rem"></p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <style>
+    .samen-form { display: flex; flex-direction: column; gap: 18px; }
+    .samen-rij { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 18px; }
+    .samen-veld { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+    .samen-veld label { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.06em; color: var(--c-tekst-zacht); }
+    .samen-opt { font-weight: 400; letter-spacing: 0; }
+    .samen-veld input, .samen-veld select, .samen-veld textarea {
+      font: inherit; font-size: 0.98rem; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--c-accent) 70%, #fff);
+      background: var(--c-hero); color: var(--c-donker); width: 100%; box-sizing: border-box; min-height: 48px; border-radius: 0;
+    }
+    .samen-veld textarea { resize: vertical; line-height: 1.6; }
+    .samen-veld input:focus-visible, .samen-veld select:focus-visible, .samen-veld textarea:focus-visible { outline: 2px solid var(--c-hoofd); outline-offset: 1px; }
+    .samen-veld [aria-invalid="true"] { border-color: #A2453B; }
+  </style>
+  <script>
+  (function () {
+    if (document.documentElement.hasAttribute('data-admin')) return;
+    var f = document.querySelector('form[data-samen]');
+    if (!f) return;
+    var msg = f.querySelector('[data-samen-msg]'), btn = f.querySelector('button[type=submit]');
+    f.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var fout = null;
+      ['naam', 'email', 'bericht'].forEach(function (n) {
+        var el = f.elements[n], leeg = !el.value.trim(), slecht = n === 'email' && !leeg && !el.checkValidity();
+        el.setAttribute('aria-invalid', leeg || slecht ? 'true' : 'false');
+        if (!fout && (leeg || slecht)) fout = el;
+      });
+      if (fout) { msg.style.color = '#A2453B'; msg.textContent = 'Vul je naam, een geldig e-mailadres en je bericht in.'; fout.focus(); return; }
+      btn.disabled = true; msg.style.color = ''; msg.textContent = 'Versturen…';
+      var data = {}; ['naam', 'email', 'organisatie', 'telefoon', 'soort', 'bericht', 'website'].forEach(function (n) { data[n] = f.elements[n].value; });
+      fetch('/api/samenwerken', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(data) })
+        .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Versturen lukte niet.'); }); })
+        .then(function () { f.reset(); msg.style.color = '#3F6B5C'; msg.textContent = 'Dank je wel! We nemen zo snel mogelijk contact met je op.'; })
+        .catch(function (err) { msg.style.color = '#A2453B'; msg.textContent = err.message; })
+        .then(function () { btn.disabled = false; });
+    });
+  })();
+  </script>

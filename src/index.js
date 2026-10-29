@@ -5,6 +5,7 @@
 
 import TEMPLATE from './template.html';
 import LOGIN_PAGE from './login.html';
+import PAGE_SAMENWERKEN from './pages/samenwerken.html';
 import { FONTS_KOP, FONTS_TEKST, fontLink, agendaHTML, DEFAULT_AGENDA, esc, KLEURVELDEN, kleurCSS } from '../public/admin/shared.js';
 
 const CONTENT_KEY = 'content';
@@ -12,10 +13,26 @@ const HIST_PREFIX = 'hist:';
 const HIST_KEEP = 30;
 const MEDIA_PREFIX = 'media:';
 const SIGNUP_PREFIX = 'signup:';
+const MSG_PREFIX = 'samen:';
 const SESSION_PREFIX = 'sess:';
 const SESSION_COOKIE = '__Host-gk_sessie';
 const SESSION_TTL = 12 * 60 * 60; // 12 uur
 const MAX_UPLOAD = 10 * 1024 * 1024;
+// Pagina's: 'home' is het sjabloon zelf; andere pagina's vervangen het deel tussen
+// <!-- inhoud:start --> en <!-- inhoud:eind --> (kop, menu en voet blijven gedeeld).
+const PAGES = {
+  home: { path: '/', title: null, body: null },
+  samenwerken: { path: '/samenwerken', title: 'Samenwerken · Het Groeikwartier', body: PAGE_SAMENWERKEN },
+};
+
+function pageHTML(name) {
+  const p = PAGES[name];
+  if (!p?.body) return TEMPLATE;
+  const a = TEMPLATE.indexOf('<!-- inhoud:start -->');
+  const b = TEMPLATE.indexOf('<!-- inhoud:eind -->');
+  return TEMPLATE.slice(0, a) + p.body + TEMPLATE.slice(b);
+}
+
 const IMAGE_TYPES = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif', 'image/avif': 'avif' };
 
 export default {
@@ -46,6 +63,7 @@ async function route(request, env, ctx) {
   }
 
   if ((path === '/' || path === '/index.html') && method === 'GET') return renderPage(env, url, false);
+  if ((path === '/samenwerken' || path === '/samenwerken/') && method === 'GET') return renderPage(env, url, false, null, 'samenwerken');
   // ---- beheer: alles onder /admin is afgeschermd, behalve het inlogscherm zelf ----
   if ((path === '/admin' || path === '/admin/') && method === 'GET') {
     if (await getSession(request, env)) return redirect('/admin/editor');
@@ -55,8 +73,13 @@ async function route(request, env, ctx) {
   if (path === '/api/logout' && method === 'POST') return logout(request, env, url);
   if (path.startsWith('/admin/')) {
     const user = await getSession(request, env);
-    if (!user) return path === '/admin/editor' ? redirect('/admin') : new Response('Niet gevonden', { status: 404 });
-    if (path === '/admin/editor' && method === 'GET') return renderPage(env, url, true, user);
+    if (!user) return path.startsWith('/admin/editor') ? redirect('/admin') : new Response('Niet gevonden', { status: 404 });
+    if (path === '/admin/editor' && method === 'GET') return renderPage(env, url, true, user, 'home');
+    const sub = /^\/admin\/editor\/([a-z-]+)$/.exec(path);
+    if (sub && method === 'GET') {
+      if (!PAGES[sub[1]] || sub[1] === 'home') return redirect('/admin/editor');
+      return renderPage(env, url, true, user, sub[1]);
+    }
     const res = await env.ASSETS.fetch(request);
     const r = withSecurity(res, url, true);
     r.headers.set('cache-control', 'private, no-store');
@@ -71,6 +94,7 @@ async function route(request, env, ctx) {
     return json(c.agenda ?? DEFAULT_AGENDA, 200, { 'cache-control': 'public, max-age=60', 'access-control-allow-origin': '*' });
   }
   if (path === '/api/signup' && method === 'POST') return signup(request, env);
+  if (path === '/api/samenwerken' && method === 'POST') return samenwerken(request, env);
   if (path === '/api/sync/agenda' && method === 'PUT') return syncAgenda(request, env);
 
   if (path.startsWith('/api/admin/')) {
@@ -93,7 +117,7 @@ function today() {
   return new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Amsterdam' });
 }
 
-async function renderPage(env, url, admin, user = null) {
+async function renderPage(env, url, admin, user = null, page = 'home') {
   const c = await getContent(env);
   const texts = c.texts || {};
   const sizes = c.sizes || {};
@@ -116,6 +140,8 @@ async function renderPage(env, url, admin, user = null) {
       content: c,
       defaultAgenda: DEFAULT_AGENDA,
       today: today(),
+      page,
+      pages: Object.entries(PAGES).map(([k, v]) => ({ key: k, path: v.path, title: k === 'home' ? 'Home' : (v.title || k).split(' · ')[0] })),
     };
     head += `<meta name="robots" content="noindex, nofollow"><link rel="stylesheet" href="/admin/editor.css">` +
       `<script>window.GK=${JSON.stringify(cfg).replace(/</g, '\\u003c')}</script>` +
@@ -125,7 +151,11 @@ async function renderPage(env, url, admin, user = null) {
 
   const rewriter = new HTMLRewriter()
     .on('head', { element(el) { el.append(head, { html: true }); } })
-    .on('title', { element(el) { if (admin) el.setInnerContent('Bewerken · Het Groeikwartier'); } })
+    .on('title', { element(el) {
+      if (admin) el.setInnerContent('Bewerken · Het Groeikwartier');
+      else if (PAGES[page]?.title) el.setInnerContent(PAGES[page].title);
+    } })
+    .on('[data-jaar]', { element(el) { el.setInnerContent(`© ${new Date().getFullYear()} Het Groeikwartier`); } })
     .on('[data-k]', {
       element(el) {
         const k = el.getAttribute('data-k');
@@ -159,7 +189,7 @@ async function renderPage(env, url, admin, user = null) {
     })
     .on('html', { element(el) { if (admin) el.setAttribute('data-admin', ''); } });
 
-  const res = rewriter.transform(new Response(TEMPLATE, { headers: { 'content-type': 'text/html; charset=utf-8' } }));
+  const res = rewriter.transform(new Response(pageHTML(page), { headers: { 'content-type': 'text/html; charset=utf-8' } }));
   const headers = new Headers(res.headers);
   headers.set('cache-control', admin ? 'no-store' : 'public, max-age=0, must-revalidate');
   return withSecurity(new Response(res.body, { status: 200, headers }), url, admin);
@@ -211,7 +241,7 @@ export function sanitizeHTML(html) {
   let s = String(html ?? '').slice(0, 20000);
   s = s.replace(/<!--[\s\S]*?-->/g, '');
   s = s.replace(/<(script|style|iframe|object|embed|template|svg|math)[\s\S]*?<\/\1\s*>/gi, '');
-  return s.replace(/<\/?([a-zA-Z][a-zA-Z0-9-]*)([^>]*)>/g, (m, tagName, attrs) => {
+  return tidyBreaks(s.replace(/<\/?([a-zA-Z][a-zA-Z0-9-]*)([^>]*)>/g, (m, tagName, attrs) => {
     const tag = tagName.toLowerCase();
     if (!ALLOWED_TAGS.has(tag)) return tag === 'div' || tag === 'p' ? '<br>' : '';
     if (m.startsWith('</')) return tag === 'br' ? '' : `</${tag}>`;
@@ -231,7 +261,17 @@ export function sanitizeHTML(html) {
       if (clean) out += ` style="${esc(clean)}"`;
     }
     return `<${tag}${out}>`;
-  });
+  }));
+}
+
+// Witregels opschonen: hoogstens één lege regel achter elkaar, geen witregels aan begin of eind,
+// en lege opmaak (bijv. <i><br></i>) weg. Eén Enter = nieuwe regel, twee Enters = één lege regel.
+export function tidyBreaks(s) {
+  for (let i = 0; i < 3; i++) s = s.replace(/<(b|strong|i|em|u|span)(\s[^>]*)?>((?:\s|&nbsp;|<br>)*)<\/\1>/gi, (m, t, a, inner) => (inner.includes('<br>') ? '<br>' : inner));
+  s = s.replace(/<br>(?:\s|&nbsp;)+(?=<br>)/gi, '<br>');
+  s = s.replace(/(?:\s*<br>\s*){3,}/gi, '<br><br>');
+  s = s.replace(/^(?:\s|&nbsp;|<br>)+/i, '').replace(/(?:\s|&nbsp;|<br>)+$/i, '');
+  return s;
 }
 
 function decodeEntities(s) {
@@ -422,6 +462,27 @@ async function adminApi(request, env, sub, method, user) {
     return json(out.reverse());
   }
 
+  if (sub === 'berichten' && method === 'GET') {
+    const out = [];
+    let cursor;
+    do {
+      const l = await env.CONTENT.list({ prefix: MSG_PREFIX, cursor });
+      for (const k of l.keys) {
+        const v = await env.CONTENT.get(k.name, 'json');
+        if (v) out.push({ id: k.name.slice(MSG_PREFIX.length), ...v });
+      }
+      cursor = l.list_complete ? null : l.cursor;
+    } while (cursor);
+    return json(out.reverse());
+  }
+
+  if (sub === 'bericht-verwijderen' && method === 'POST') {
+    const { id } = await readJson(request, 500);
+    if (!/^\d{15}-[a-z0-9]{6}$/.test(String(id))) throw new HttpError(400, 'Onbekend bericht.');
+    await env.CONTENT.delete(MSG_PREFIX + id);
+    return json({ ok: true });
+  }
+
   throw new HttpError(404, 'Onbekende actie.');
 }
 
@@ -471,6 +532,23 @@ async function signup(request, env) {
   const key = SIGNUP_PREFIX + (await sha(email)).slice(0, 24);
   const exists = await env.CONTENT.get(key);
   if (!exists) await env.CONTENT.put(key, '1', { metadata: { email, at: new Date().toISOString() } });
+  return json({ ok: true });
+}
+
+// ---------- samenwerken ----------
+
+async function samenwerken(request, env) {
+  const b = await readJson(request, 12000);
+  if (b.website) return json({ ok: true }); // honeypot
+  const str = (v, n) => String(v ?? '').trim().slice(0, n);
+  const msg = {
+    naam: str(b.naam, 120), email: str(b.email, 200).toLowerCase(), organisatie: str(b.organisatie, 160),
+    telefoon: str(b.telefoon, 40), soort: str(b.soort, 80), bericht: str(b.bericht, 4000), at: new Date().toISOString(),
+  };
+  if (!msg.naam || !msg.bericht) throw new HttpError(400, 'Vul je naam en je bericht in.');
+  if (!/^[^\s@<>]{1,64}@[^\s@<>]{1,190}\.[a-z]{2,}$/i.test(msg.email)) throw new HttpError(400, 'Vul een geldig e-mailadres in.');
+  const id = String(Date.now()).padStart(15, '0') + '-' + randomId(6);
+  await env.CONTENT.put(MSG_PREFIX + id, JSON.stringify(msg));
   return json({ ok: true });
 }
 

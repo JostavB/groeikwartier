@@ -91,6 +91,26 @@ html.gk-on .gk-img:hover { outline: 2px dashed var(--gk-focus); }
 .gk-hist div { display: flex; flex-direction: column; }
 .gk-hist small { color: #4F5B5C; }
 
+/* paginakeuze */
+.gk-pagelabel { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; opacity: .9; }
+.gk-pagesel { font: 600 13px/1 var(--gk-ui-font); background: transparent; color: inherit; border: 1px solid rgba(255,255,255,.25); border-radius: 6px; padding: 8px 10px; min-height: 36px; }
+.gk-pagesel option { color: var(--gk-ink); }
+
+/* lege tekstvelden zichtbaar in de editor */
+html.gk-on [data-k]:empty { display: block; min-height: 1.4em; min-width: 8em; }
+html.gk-on [data-k]:empty::before { content: 'Leeg, wordt niet getoond'; opacity: .45; font-style: italic; font-size: .85em; }
+html.gk-on a.knop[data-k]:empty { display: inline-block; }
+
+/* berichten */
+.gk-msg { border: 1px solid var(--gk-line); border-radius: 8px; padding: 12px; margin-bottom: 12px; display: flex; flex-direction: column; gap: 8px; }
+.gk-msg-head { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; }
+.gk-msg-head small, .gk-msg-meta { color: #4F5B5C; font-size: 12px; }
+.gk-msg-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.gk-chip { background: #ECEEE9; border-radius: 99px; padding: 2px 8px; }
+.gk-msg-body { margin: 0; white-space: pre-wrap; line-height: 1.5; }
+.gk-msg-contact { display: flex; flex-wrap: wrap; gap: 12px; font-size: 13px; }
+.gk-copyable { user-select: all; overflow-wrap: anywhere; }
+
 /* instellingen */
 .gk-sub { margin: 6px 0 0; font-size: 15px; }
 .gk-color { display: grid; grid-template-columns: 40px minmax(0, 1fr) 92px auto; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--gk-line); }

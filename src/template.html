@@ -69,6 +69,21 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
 .b-panel p{color:var(--c-tekst-licht) !important}
 .b-panel .m-photo{background:color-mix(in srgb, var(--c-hoofd) 60%, #fff);color:var(--c-achtergrond)}
 #wij > div{gap:40px !important}
+/* Lege tekstblokken nemen geen ruimte in */
+[data-k]:empty{display:none}
+/* Links in teksten: zelfde kleur als de tekst, bij aanwijzen donkerblauw */
+[data-k] a,a[data-l]:not(.knop){color:inherit;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px;transition:color .15s}
+[data-k] a:hover,[data-k] a:focus-visible,a[data-l]:not(.knop):hover,a[data-l]:not(.knop):focus-visible{color:var(--c-donker)}
+/* Knoppen: bij aanwijzen wisselen achtergrond en tekst */
+.knoppen{display:flex;flex-wrap:wrap;gap:12px}
+.knop{display:inline-block;background:var(--c-accent);color:var(--c-donker);border:2px solid var(--c-accent);text-decoration:none;padding:12px 24px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;cursor:pointer;transition:background-color .2s,color .2s,border-color .2s}
+.knop:hover,.knop:focus-visible{background:var(--c-donker);color:var(--c-accent);border-color:var(--c-donker)}
+.knop-rand{background:transparent;color:var(--c-achtergrond);border-color:var(--c-accent)}
+.knop-rand:hover,.knop-rand:focus-visible{background:var(--c-accent);color:var(--c-donker);border-color:var(--c-accent)}
+.knop-vol{background:var(--c-hoofd);color:var(--c-achtergrond);border-color:var(--c-hoofd)}
+.knop-vol:hover,.knop-vol:focus-visible{background:var(--c-donker);color:var(--c-achtergrond);border-color:var(--c-donker)}
+@media (prefers-reduced-motion: reduce){.knop,[data-k] a,a[data-l]{transition:none}}
+
 </style>
 
 
@@ -76,22 +91,23 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
 
   <!-- Menu onderin (telefoon) -->
   <nav class="m-tabs" aria-label="Menu">
-    <a href="#top"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7"></path><path d="M6 10v10h12V10"></path><path d="M10 20v-5h4v5"></path></svg><span>Home</span></a>
-    <a href="#agenda"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="1.5"></rect><path d="M4 10h16"></path><path d="M8.5 3.5v4M15.5 3.5v4"></path></svg><span>Agenda</span></a>
-    <a href="#wij"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3"></circle><circle cx="16.5" cy="9.5" r="2.4"></circle><path d="M3.5 19.5c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"></path><path d="M14.8 14.6c.5-.1 1.1-.2 1.7-.2 2.2 0 3.8 1.5 4.3 4.6"></path></svg><span>Over ons</span></a>
-    <a href="#contact"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="6" width="17" height="12.5" rx="1.5"></rect><path d="m4 7 8 6 8-6"></path></svg><span>Contact</span></a>
+    <a href="/#top"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7"></path><path d="M6 10v10h12V10"></path><path d="M10 20v-5h4v5"></path></svg><span>Home</span></a>
+    <a href="/#agenda"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5.5" width="16" height="14.5" rx="1.5"></rect><path d="M4 10h16"></path><path d="M8.5 3.5v4M15.5 3.5v4"></path></svg><span>Agenda</span></a>
+    <a href="/#wij"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8.5" r="3"></circle><circle cx="16.5" cy="9.5" r="2.4"></circle><path d="M3.5 19.5c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"></path><path d="M14.8 14.6c.5-.1 1.1-.2 1.7-.2 2.2 0 3.8 1.5 4.3 4.6"></path></svg><span>Over ons</span></a>
+    <a href="/#contact"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="6" width="17" height="12.5" rx="1.5"></rect><path d="m4 7 8 6 8-6"></path></svg><span>Contact</span></a>
   </nav>
 
   <!-- Header -->
   <header class="m-header" style="position: sticky; top: 0; z-index: 10">
     <nav class="m-nav" aria-label="Hoofdmenu" style="background: var(--c-donker); border-bottom: 8px solid var(--c-hoofd); display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 36px; padding: 10px 16px; font-size: 0.74rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase">
-      <a href="#top">Home</a>
-      <a href="#agenda">Agenda</a>
-      <a href="#wij">Over ons</a>
-      <a href="#contact">Contact</a>
+      <a href="/#top">Home</a>
+      <a href="/#agenda">Agenda</a>
+      <a href="/#wij">Over ons</a>
+      <a href="/#contact">Contact</a>
     </nav>
   </header>
 
+  <!-- inhoud:start -->
   <!-- Hero met illustratie -->
   <section id="top" class="b-hero">
     <div class="m-topline" aria-hidden="true"></div>
@@ -119,7 +135,7 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
         <div style="display: flex; flex-direction: column; gap: 20px">
           <h2 data-k="avond-titel" style="margin: 0; font-family: var(--font-kop); font-weight: 500; font-size: calc(clamp(2.2rem, 4.6vw, 3.2rem) * var(--fs,1)); line-height: 1.1">Binnenkort lees je hier alles over de eerste avond.</h2>
           <p data-k="avond-tekst" style="margin: 0; font-size: calc(1rem * var(--fs,1)); line-height: 1.75; color: var(--c-tekst-licht)">Wanneer, waar en waarover: zodra het vaststaat, staat het op deze pagina. Wil je het als eerste weten? Laat je e-mailadres achter.</p>
-                    <div><a data-k="avond-knop" href="#contact" style="display: inline-block; background: var(--c-accent); color: var(--c-donker); text-decoration: none; padding: 14px 26px; font-size: calc(0.72rem * var(--fs,1)); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase">Houd me op de hoogte</a></div>
+                    <div class="knoppen"><a class="knop" data-k="avond-knop" href="#contact" style="font-size: calc(0.72rem * var(--fs,1))">Houd me op de hoogte</a><a class="knop knop-rand" data-k="avond-knop-2" data-l="link-samenwerken" href="/samenwerken" style="font-size: calc(0.72rem * var(--fs,1))">Wil je samenwerken?</a></div>
         </div>
       </div>
     </div>
@@ -160,7 +176,7 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
             <p data-k="josta-tekst-2" style="margin: 0; font-size: calc(1rem * var(--fs,1)); line-height: 1.8; color: var(--c-tekst-licht)">De emotionele basisbehoeften zijn wat elk kind emotioneel nodig heeft. Het gaat hierbij om veiligheid en verbinding, autonomie, realistische grenzen, vrijheid van expressie, spontaniteit en spel, rechtvaardigheid en zelfcoherentie. Dit zijn universele emotionele basisbehoeften en vanuit schematherapie leiden alle ongezonde overtuigingen hier naartoe. Want patronen ontstaan vaak in de kindertijd wanneer belangrijke volwassenen structureel onvoldoende tegemoet kwamen aan emotionele basisbehoeften.</p>
             <p data-k="josta-tekst-3" style="margin: 0; font-size: calc(1rem * var(--fs,1)); line-height: 1.8; color: var(--c-tekst-licht)">Tijdens mijn opleiding en in de sessies met cliënten dacht ik steeds: dit zou iedereen toch moeten weten? Als hier de kern van zoveel problemen ligt, hoort die kennis veel eerder thuis. Preventief, in het gewone leven met kinderen. Voor de opvoedpuzzel geeft dit een kader: je ziet sneller waar je moet zoeken, wat je kind nodig heeft en wat jij zelf anders kunt doen. Als ik dat ter sprake breng, hoor ik vaak: daar wil ik meer over weten!</p>
             <p data-k="josta-tekst-4" style="margin: 0; font-size: calc(1rem * var(--fs,1)); line-height: 1.8; color: var(--c-tekst-licht)">Daarom is het nu mijn missie om deze kennis verder te brengen dan de therapiekamers! Ik richt me op (aanstaande) ouders en op iedereen die met kinderen leeft of werkt: opa’s en oma’s, leerkrachten, sportcoaches, oppassen etc. Ik hoop jullie snel te ontmoeten.</p>
-            <p data-k="josta-tekst-5" style="margin: 0; font-size: calc(1rem * var(--fs,1)); line-height: 1.8; color: var(--c-tekst-licht)">Wil je contact of meer weten over mijn praktijk: <a data-l="link-centrum" href="[WEBSITE CENTRUM]" style="color: var(--c-achtergrond); text-decoration-color: var(--c-accent); text-underline-offset: 3px">Centrum voor Emotionele Basisbehoeften</a>.</p>
+            <p data-k="josta-tekst-5" style="margin: 0; font-size: calc(1rem * var(--fs,1)); line-height: 1.8; color: var(--c-tekst-licht)">Wil je contact of meer weten over mijn praktijk: <a data-l="link-centrum" href="[WEBSITE CENTRUM]">Centrum voor Emotionele Basisbehoeften</a>.</p>
             </div>
           <button type="button" class="m-toggle" data-target="meer-J" aria-controls="meer-J" aria-expanded="false"><span>Lees meer</span><svg viewBox="0 0 24 24" aria-hidden="true" ><path d="m6 9 6 6 6-6"></path></svg></button>
         </div>
@@ -174,7 +190,7 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
           <p data-k="eva-rol" style="margin: 0; font-size: calc(0.7rem * var(--fs,1)); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: color-mix(in srgb, var(--c-accent) 55%, #fff)">Gezinsbehandelaar · Studio Binnenwereld</p>
           <p data-k="eva-tekst-1" style="margin: 0; font-size: calc(1rem * var(--fs,1)); line-height: 1.8; color: var(--c-tekst-licht)">Ik ben Eva, moeder van twee energieke en gezellige jongens van 2,5 en bijna 5 jaar. Woon samen met mijn handige en creatieve man in het Soesterkwartier.</p>
           <div id="meer-E" hidden style="display: flex; flex-direction: column; gap: 14px">
-            <p data-k="eva-tekst-2" style="margin: 0; font-size: calc(1rem * var(--fs,1)); line-height: 1.8; color: var(--c-tekst-licht)">Als ambulant gezinsbehandelaar in de specialistische jeugdhulp help ik ouders en hun kinderen elkaar beter te begrijpen, onder andere rondom ADHD en volle hoofden. In mijn eigen praktijk, <a data-l="link-studio" href="[WEBSITE STUDIO BINNENWERELD]" style="color: var(--c-achtergrond); text-decoration-color: var(--c-accent); text-underline-offset: 3px">Studio Binnenwereld</a>, breid ik dit uit naar coaching voor volwassenen met een neurodivers brein.</p>
+            <p data-k="eva-tekst-2" style="margin: 0; font-size: calc(1rem * var(--fs,1)); line-height: 1.8; color: var(--c-tekst-licht)">Als ambulant gezinsbehandelaar in de specialistische jeugdhulp help ik ouders en hun kinderen elkaar beter te begrijpen, onder andere rondom ADHD en volle hoofden. In mijn eigen praktijk, <a data-l="link-studio" href="[WEBSITE STUDIO BINNENWERELD]">Studio Binnenwereld</a>, breid ik dit uit naar coaching voor volwassenen met een neurodivers brein.</p>
             </div>
           <button type="button" class="m-toggle" data-target="meer-E" aria-controls="meer-E" aria-expanded="false"><span>Lees meer</span><svg viewBox="0 0 24 24" aria-hidden="true" ><path d="m6 9 6 6 6-6"></path></svg></button>
         </div>
@@ -193,7 +209,7 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
             <label data-k="contact-label" for="m-mail" style="font-size: calc(0.75rem * var(--fs,1)); font-weight: 600; letter-spacing: 0.08em; color: var(--c-tekst-zacht)">E-mailadres</label>
             <input id="m-mail" name="email" type="email" required autocomplete="email" placeholder="naam@voorbeeld.nl" style="font: inherit; font-size: 0.95rem; padding: 13px 14px; border: 1px solid color-mix(in srgb, var(--c-accent) 70%, #fff); background: var(--c-hero); color: var(--c-donker); min-height: 48px; box-sizing: border-box; width: 100%">
           </div>
-          <button data-k="contact-knop" type="submit" style="font: inherit; background: var(--c-hoofd); color: var(--c-achtergrond); border: 0; padding: 0 26px; min-height: 48px; font-size: calc(0.72rem * var(--fs,1)); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer">Aanmelden</button>
+          <button class="knop knop-vol" data-k="contact-knop" type="submit" style="font-family: inherit; padding: 0 26px; min-height: 48px; font-size: calc(0.72rem * var(--fs,1))">Aanmelden</button>
         <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px">
         </form>
         <p data-signup-msg role="status" style="margin: 0; font-size: 0.9rem; min-height: 1.4em"></p>
@@ -206,15 +222,20 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
     </div>
   </section>
 
+  <!-- inhoud:eind -->
+
   <footer style="background: var(--c-donker); text-align: center; padding: 32px 20px; display: flex; flex-direction: column; gap: 10px; align-items: center">
     <img data-img="woordmerk" src="/wordmark-licht.png" alt="Het Groeikwartier" style="display: block; height: calc(28px * var(--fs,1)); width: auto">
     <span data-k="footer-tekst" style="font-size: calc(0.72rem * var(--fs,1)); letter-spacing: 0.2em; text-transform: uppercase; color: var(--c-zand)">It takes a village to raise a child</span>
+    <span data-jaar style="font-size: 0.72rem; color: color-mix(in srgb, var(--c-zand) 70%, var(--c-donker))">© Het Groeikwartier</span>
   </footer>
 
 </div>
 
 <script>
 document.querySelectorAll('.m-toggle').forEach(function(b){
+  var doel=document.getElementById(b.dataset.target);
+  if(doel && !document.documentElement.hasAttribute('data-admin') && !doel.textContent.trim()){b.hidden=true;return;}
   b.addEventListener('click',function(){
     var t=document.getElementById(b.dataset.target); var open=t.hidden;
     t.hidden=!open; b.setAttribute('aria-expanded',open?'true':'false');

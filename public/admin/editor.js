@@ -35,6 +35,21 @@ function normalize(c) {
 
 // ---------------- opbouw ----------------
 
+function currentPage() {
+  return (GK.pages || []).find((p) => p.key === GK.page) || { key: 'home', path: '/', title: 'Home' };
+}
+
+function pageSwitch() {
+  const sel = h('select', { class: 'gk-pagesel', id: 'gk-page', 'aria-label': 'Pagina kiezen' },
+    ...(GK.pages || [{ key: 'home', title: 'Home' }]).map((p) => h('option', { value: p.key, selected: p.key === GK.page }, p.title)));
+  sel.addEventListener('change', () => {
+    if (dirty && !window.confirm('Je hebt wijzigingen die nog niet gepubliceerd zijn. Toch naar een andere pagina?')) { sel.value = GK.page; return; }
+    dirty = false;
+    location.href = sel.value === 'home' ? '/admin/editor' : '/admin/editor/' + sel.value;
+  });
+  return h('label', { class: 'gk-pagelabel', for: 'gk-page' }, h('span', {}, 'Pagina'), sel);
+}
+
 const bar = h('div', { class: 'gk-ui gk-bar', role: 'toolbar', 'aria-label': 'Editor' });
 const status = h('span', { class: 'gk-status', role: 'status' });
 const publishBtn = h('button', { class: 'gk-btn gk-primary', type: 'button', onclick: save, disabled: true }, 'Publiceren');
@@ -42,15 +57,17 @@ const who = h('span', { class: 'gk-who' });
 
 bar.append(
   h('span', { class: 'gk-brand' }, 'Groeikwartier', h('small', {}, 'editor')),
+  pageSwitch(),
   h('div', { class: 'gk-actions' },
     h('button', { class: 'gk-btn', type: 'button', onclick: () => openPanel('fonts') }, 'Instellingen'),
     h('button', { class: 'gk-btn', type: 'button', onclick: () => openPanel('agenda') }, 'Agenda'),
     h('button', { class: 'gk-btn', type: 'button', onclick: () => openPanel('signups') }, 'Aanmeldingen'),
+    h('button', { class: 'gk-btn', type: 'button', onclick: () => openPanel('berichten') }, 'Berichten'),
     h('button', { class: 'gk-btn', type: 'button', onclick: () => openPanel('history') }, 'Versies'),
   ),
   h('div', { class: 'gk-right' },
     status,
-    h('a', { class: 'gk-btn gk-ghost', href: '/', target: '_blank', rel: 'noopener' }, 'Bekijk site'),
+    h('a', { class: 'gk-btn gk-ghost', href: currentPage().path, target: '_blank', rel: 'noopener' }, 'Bekijk pagina'),
     publishBtn,
     who,
     h('button', { class: 'gk-btn gk-ghost', type: 'button', onclick: logout }, 'Uitloggen'),
@@ -343,9 +360,9 @@ function openPanel(kind) {
   panel.hidden = false;
   const close = h('button', { class: 'gk-btn gk-ghost gk-close', type: 'button', onclick: () => { panel.hidden = true; } }, 'Sluiten');
   const body = h('div', { class: 'gk-panel-body' });
-  const titles = { fonts: 'Instellingen', agenda: 'Agenda', signups: 'Aanmeldingen', history: 'Versies' };
+  const titles = { fonts: 'Instellingen', agenda: 'Agenda', signups: 'Aanmeldingen', berichten: 'Berichten', history: 'Versies' };
   panel.append(h('div', { class: 'gk-panel-head' }, h('h2', {}, titles[kind]), close), body);
-  ({ fonts: fontsPanel, agenda: agendaPanel, signups: signupsPanel, history: historyPanel })[kind](body);
+  ({ fonts: fontsPanel, agenda: agendaPanel, signups: signupsPanel, berichten: berichtenPanel, history: historyPanel })[kind](body);
 }
 
 function fontsPanel(body) {
@@ -493,6 +510,38 @@ function agendaItem(it, i, redraw) {
   );
 }
 
+async function berichtenPanel(body) {
+  body.append(h('p', { class: 'gk-help' }, 'Berichten via het formulier op de pagina Samenwerken, nieuwste bovenaan.'));
+  const box = h('div', { class: 'gk-msgs' }, 'Laden…');
+  body.append(box);
+  try {
+    const list = await api('/api/admin/berichten');
+    box.textContent = '';
+    if (!list.length) { box.append(h('p', {}, 'Nog geen berichten.')); return; }
+    for (const m of list) {
+      const del = h('button', { class: 'gk-btn gk-danger', type: 'button' }, 'Verwijderen');
+      const card = h('article', { class: 'gk-msg' },
+        h('div', { class: 'gk-msg-head' }, h('strong', {}, m.naam || 'Zonder naam'), h('small', {}, fmtDate(m.at))),
+        h('div', { class: 'gk-msg-meta' },
+          m.soort ? h('span', { class: 'gk-chip' }, m.soort) : null,
+          m.organisatie ? h('span', {}, m.organisatie) : null),
+        h('p', { class: 'gk-msg-body' }, m.bericht || ''),
+        h('div', { class: 'gk-msg-contact' },
+          h('span', { class: 'gk-copyable' }, m.email || ''),
+          m.telefoon ? h('span', { class: 'gk-copyable' }, m.telefoon) : null),
+        h('div', { class: 'gk-row gk-item-actions' }, del),
+      );
+      del.addEventListener('click', async () => {
+        if (!del.dataset.sure) { del.dataset.sure = '1'; del.textContent = 'Zeker weten?'; setTimeout(() => { delete del.dataset.sure; del.textContent = 'Verwijderen'; }, 3000); return; }
+        del.disabled = true;
+        try { await api('/api/admin/bericht-verwijderen', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: m.id }) }); card.remove(); }
+        catch (e) { del.disabled = false; del.textContent = e.message; }
+      });
+      box.append(card);
+    }
+  } catch (e) { box.textContent = e.message; }
+}
+
 async function signupsPanel(body) {
   body.append(h('p', { class: 'gk-help' }, 'Mensen die zich via de site hebben aangemeld voor berichten.'));
   const box = h('div', {}, 'Laden…');
@@ -538,7 +587,7 @@ async function historyPanel(body) {
 // ---------------- publiceren ----------------
 
 function collect() {
-  const texts = {};
+  const texts = { ...content.texts };
   for (const el of $$('[data-k]')) texts[el.dataset.k] = el.innerHTML.trim();
   for (const a of $$('a[data-l]')) content.links[a.dataset.l] = a.getAttribute('href') || '';
   return { ...content, texts };

@@ -293,6 +293,11 @@ document.querySelectorAll('form[data-signup]').forEach(function(f){
   var msg=f.parentNode.querySelector('[data-signup-msg]'),btn=f.querySelector('button[type=submit]'),em=f.elements.email;
   try{var b=sessionStorage.getItem('gk-email');if(b&&!em.value)em.value=b;}catch(x){}
   em.addEventListener('input',function(){try{sessionStorage.setItem('gk-email',em.value);}catch(x){}});
+  // Onthoud dat je via het formulier naar de privacyverklaring ging, zodat 'Terug naar de website' je hier terugbrengt.
+  f.querySelectorAll('.gk-vink a').forEach(function(a){a.addEventListener('click',function(){try{sessionStorage.setItem('gk-terug','1');}catch(x){}});});
+  // Op de homepage zelf is de terugweg niet meer nodig.
+  var wis=function(){try{sessionStorage.removeItem('gk-terug');}catch(x){}};
+  wis(); window.addEventListener('pageshow',wis);
   f.addEventListener('submit',function(e){
     e.preventDefault();
     msg.style.color='#A2453B';

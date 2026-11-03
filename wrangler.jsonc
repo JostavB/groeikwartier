@@ -13,8 +13,13 @@
   "vars": {
     // Wie mag inloggen op /admin (komma-gescheiden Google-accounts).
     "ADMIN_EMAILS": "hetgroeikwartier@gmail.com",
+    // MailerLite-groep waar nieuwe aanmeldingen in komen. Niet geheim. De API-sleutel staat als
+    // geheim MAILERLITE_API_KEY in Cloudflare (Workers > Instellingen > Variabelen en geheimen).
+    "MAILERLITE_GROUP_ID": "203122172208612731",
     // Client-ID uit Google Cloud Console (OAuth, type Webapplicatie). Niet geheim.
     "GOOGLE_CLIENT_ID": "857704209749-lmm6p5m53d7m5ei8j7l134iqo0fh9npq.apps.googleusercontent.com"
   },
+  // Houd variabelen en geheimen die in het Cloudflare-dashboard zijn ingesteld (zoals MAILERLITE_API_KEY) bewaard bij elke nieuwe uitrol.
+  "keep_vars": true,
   "observability": { "enabled": true }
 }

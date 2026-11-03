@@ -7,7 +7,6 @@ import TEMPLATE from './template.html';
 import LOGIN_PAGE from './login.html';
 import PAGE_SAMENWERKEN from './pages/samenwerken.html';
 import PAGE_PRIVACY from './pages/privacy.html';
-import PAGE_AFMELDEN from './pages/afmelden.html';
 import PAGE_DISCLAIMER from './pages/disclaimer.html';
 import { FONTS_KOP, FONTS_TEKST, STANDAARD_KOP, STANDAARD_TEKST, agendaHTML, DEFAULT_AGENDA, esc, KLEURVELDEN, kleurCSS } from '../public/admin/shared.js';
 
@@ -15,9 +14,7 @@ const CONTENT_KEY = 'content';
 const HIST_PREFIX = 'hist:';
 const HIST_KEEP = 30;
 const MEDIA_PREFIX = 'media:';
-const SIGNUP_PREFIX = 'signup:';
 const MSG_PREFIX = 'samen:';
-const UNSUB_PREFIX = 'afmeld:';
 const SESSION_PREFIX = 'sess:';
 const SESSION_COOKIE = '__Host-gk_sessie';
 const SESSION_TTL = 12 * 60 * 60; // 12 uur
@@ -28,7 +25,6 @@ const PAGES = {
   home: { path: '/', title: null, body: null },
   samenwerken: { path: '/samenwerken', title: 'Samenwerken · Het Groeikwartier', body: PAGE_SAMENWERKEN },
   privacy: { path: '/privacy', title: 'Privacyverklaring · Het Groeikwartier', body: PAGE_PRIVACY },
-  afmelden: { path: '/afmelden', title: 'Afmelden · Het Groeikwartier', body: PAGE_AFMELDEN },
   disclaimer: { path: '/disclaimer', title: 'Disclaimer · Het Groeikwartier', body: PAGE_DISCLAIMER },
 };
 
@@ -96,6 +92,8 @@ async function route(request, env, ctx) {
     return r;
   }
   if (path === '/robots.txt') return robots(url);
+  if (path === '/sitemap.xml') return sitemap(url);
+  if ((path === '/afmelden' || path === '/afmelden/') && method === 'GET') return redirect('/#afmelden');
 
   if (path.startsWith('/media/') && method === 'GET') return media(env, path.slice(7));
 
@@ -103,8 +101,8 @@ async function route(request, env, ctx) {
     const c = await getContent(env);
     return json(c.agenda ?? DEFAULT_AGENDA, 200, { 'cache-control': 'public, max-age=60', 'access-control-allow-origin': '*' });
   }
-  if (path === '/api/signup' && method === 'POST') return signup(request, env);
-  if (path === '/api/afmelden' && method === 'POST') return unsubscribe(request, env);
+  if (path === '/api/signup' && method === 'POST') return signup(request, env, url);
+  if (path === '/api/unsubscribe' && method === 'POST') return unsubscribe(request, env, url);
   if (path === '/api/samenwerken' && method === 'POST') return samenwerken(request, env);
   if (path === '/api/sync/agenda' && method === 'PUT') return syncAgenda(request, env);
 
@@ -221,8 +219,16 @@ function withSecurity(res, url, admin = false) {
 function robots(url) {
   const body = url.hostname.endsWith('.workers.dev')
     ? 'User-agent: *\nDisallow: /\n'
-    : 'User-agent: *\nDisallow: /admin\nDisallow: /api/\n';
+    : 'User-agent: *\nDisallow: /admin\nDisallow: /api/\n\nSitemap: https://groeikwartier.com/sitemap.xml\n';
   return new Response(body, { headers: { 'content-type': 'text/plain; charset=utf-8' } });
+}
+
+function sitemap(url) {
+  if (url.hostname.endsWith('.workers.dev')) return new Response('Niet gevonden', { status: 404 });
+  const paden = Object.keys(PAGES).map((k) => PAGES[k].path);
+  const body = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    + paden.map((p) => `  <url><loc>https://groeikwartier.com${p === '/' ? '/' : p}</loc></url>`).join('\n') + '\n</urlset>\n';
+  return new Response(body, { headers: { 'content-type': 'application/xml; charset=utf-8', 'cache-control': 'public, max-age=3600' } });
 }
 
 async function notFound(env, request) {
@@ -462,33 +468,6 @@ async function adminApi(request, env, sub, method, user) {
     return json({ url: '/media/' + id });
   }
 
-  if (sub === 'signups' && method === 'GET') {
-    const out = [];
-    let cursor;
-    do {
-      const l = await env.CONTENT.list({ prefix: SIGNUP_PREFIX, cursor });
-      for (const k of l.keys) {
-        let { email, at, token } = k.metadata || {};
-        if (email && !token) {
-          // Oudere aanmelding: alsnog een persoonlijke afmeldcode geven.
-          token = randomId(32);
-          await env.CONTENT.put(k.name, JSON.stringify({ email, at, token, bron: 'website' }), { metadata: { email, at, token } });
-          await env.CONTENT.put(UNSUB_PREFIX + token, k.name);
-        }
-        out.push({ email, at, afmeldlink: token ? `${new URL(request.url).origin}/afmelden?t=${token}` : '' });
-      }
-      cursor = l.list_complete ? null : l.cursor;
-    } while (cursor);
-    return json(out.reverse());
-  }
-
-  if (sub === 'signup-verwijderen' && method === 'POST') {
-    const { email } = await readJson(request, 500);
-    if (typeof email !== 'string' || !email.includes('@')) throw new HttpError(400, 'Onbekend adres.');
-    await removeSignup(env, await signupKey(email.trim().toLowerCase()));
-    return json({ ok: true });
-  }
-
   if (sub === 'berichten' && method === 'GET') {
     const out = [];
     let cursor;
@@ -552,45 +531,72 @@ function cleanAgenda(list) {
 
 // ---------- aanmelden nieuwsbrief ----------
 
-async function signupKey(email) {
-  return SIGNUP_PREFIX + (await sha(email)).slice(0, 24);
+// Adressen worden niet op de site bewaard maar direct naar MailerLite gestuurd.
+// Met "Double opt-in for API and integrations" aan in MailerLite krijgt iedereen eerst een bevestigingsmail.
+// Vereist: variabele MAILERLITE_GROUP_ID (wrangler.jsonc) en geheim MAILERLITE_API_KEY (Cloudflare).
+const SIGNUP_LIMIT = 5; // per bezoeker per uur
+const EMAIL_RE = /^[^\s@<>]{1,64}@[^\s@<>]{1,190}\.[a-z]{2,}$/i;
+
+// Begrenzing per bezoeker: alleen een versleutelde afkorting van het IP-adres, een uur bewaard.
+async function limiet(request, env, voorvoegsel) {
+  const ip = request.headers.get('cf-connecting-ip') || 'onbekend';
+  const key = voorvoegsel + (await sha(ip)).slice(0, 24);
+  const used = Number(await env.CONTENT.get(key)) || 0;
+  if (used >= SIGNUP_LIMIT) throw new HttpError(429, 'Te veel pogingen. Probeer het later opnieuw.');
+  await env.CONTENT.put(key, String(used + 1), { expirationTtl: 3600 });
 }
 
-// Aanmelden: e-mailadres + moment van aanmelden (bewijs van toestemming) + persoonlijke afmeldcode.
-async function signup(request, env) {
+async function signup(request, env, url) {
+  if (!sameOrigin(request, url)) throw new HttpError(403, 'Ongeldig verzoek.');
   const body = await readJson(request, 2000);
   if (body.website) return json({ ok: true }); // honeypot
   const email = String(body.email || '').trim().toLowerCase();
-  if (!/^[^\s@<>]{1,64}@[^\s@<>]{1,190}\.[a-z]{2,}$/i.test(email)) throw new HttpError(400, 'Vul een geldig e-mailadres in.');
-  const key = await signupKey(email);
-  const exists = await env.CONTENT.get(key);
-  if (!exists) {
-    const token = randomId(32);
-    const at = new Date().toISOString();
-    await env.CONTENT.put(key, JSON.stringify({ email, at, token, bron: 'website' }), { metadata: { email, at, token } });
-    await env.CONTENT.put(UNSUB_PREFIX + token, key);
+  if (!EMAIL_RE.test(email)) throw new HttpError(400, 'Vul een geldig e-mailadres in.');
+  if (body.akkoord !== true) throw new HttpError(400, 'Vink aan dat je berichten wilt ontvangen en de privacyverklaring hebt gelezen.');
+  if (!env.MAILERLITE_API_KEY || !env.MAILERLITE_GROUP_ID) throw new HttpError(503, 'Aanmelden is nog niet beschikbaar.');
+  await limiet(request, env, 'rl:');
+
+  const res = await fetch('https://connect.mailerlite.com/api/subscribers', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', accept: 'application/json', authorization: 'Bearer ' + env.MAILERLITE_API_KEY },
+    // Groeps-ID altijd als tekst meesturen, nooit als getal.
+    body: JSON.stringify({ email, groups: [String(env.MAILERLITE_GROUP_ID)] }),
+  });
+  if (!res.ok) {
+    console.error('MailerLite', res.status, await res.text());
+    if (res.status === 422) throw new HttpError(400, 'Dit e-mailadres wordt niet geaccepteerd. Controleer het adres.');
+    throw new HttpError(502, 'Aanmelden lukt nu niet. Probeer het later opnieuw.');
   }
   return json({ ok: true });
 }
 
-async function removeSignup(env, key) {
-  const v = await env.CONTENT.get(key, 'json').catch(() => null);
-  if (v?.token) await env.CONTENT.delete(UNSUB_PREFIX + v.token);
-  await env.CONTENT.delete(key);
-}
-
-// Afmelden met persoonlijke link (token) of met e-mailadres. Altijd hetzelfde antwoord,
-// zodat niemand kan nagaan of een adres bij ons bekend is.
-async function unsubscribe(request, env) {
-  const body = await readJson(request, 1000);
-  if (typeof body.token === 'string' && /^[a-z0-9]{32}$/.test(body.token)) {
-    const key = await env.CONTENT.get(UNSUB_PREFIX + body.token);
-    if (key) await removeSignup(env, key);
-    return json({ ok: true });
-  }
+// Afmelden via de site: zoek het adres op en zet de status op "unsubscribed". Het antwoord is altijd
+// hetzelfde, ook als het adres niet op de lijst staat, zodat niemand kan nagaan wie er op de lijst staat.
+async function unsubscribe(request, env, url) {
+  if (!sameOrigin(request, url)) throw new HttpError(403, 'Ongeldig verzoek.');
+  const body = await readJson(request, 2000);
+  if (body.website) return json({ ok: true }); // honeypot
   const email = String(body.email || '').trim().toLowerCase();
-  if (!/^[^\s@<>]{1,64}@[^\s@<>]{1,190}\.[a-z]{2,}$/i.test(email)) throw new HttpError(400, 'Vul een geldig e-mailadres in.');
-  await removeSignup(env, await signupKey(email));
+  if (!EMAIL_RE.test(email)) throw new HttpError(400, 'Vul een geldig e-mailadres in.');
+  if (!env.MAILERLITE_API_KEY) throw new HttpError(503, 'Afmelden is nog niet beschikbaar.');
+  await limiet(request, env, 'ru:');
+
+  const headers = { 'content-type': 'application/json', accept: 'application/json', authorization: 'Bearer ' + env.MAILERLITE_API_KEY };
+  const found = await fetch('https://connect.mailerlite.com/api/subscribers/' + encodeURIComponent(email), { headers });
+  if (found.status === 404) return json({ ok: true });
+  if (!found.ok) {
+    console.error('MailerLite zoeken', found.status, await found.text());
+    throw new HttpError(502, 'Afmelden lukt nu niet. Probeer het later opnieuw.');
+  }
+  const id = (await found.json())?.data?.id;
+  if (!id) return json({ ok: true });
+  const res = await fetch('https://connect.mailerlite.com/api/subscribers/' + encodeURIComponent(id), {
+    method: 'PUT', headers, body: JSON.stringify({ status: 'unsubscribed' }),
+  });
+  if (!res.ok) {
+    console.error('MailerLite afmelden', res.status, await res.text());
+    throw new HttpError(502, 'Afmelden lukt nu niet. Probeer het later opnieuw.');
+  }
   return json({ ok: true });
 }
 

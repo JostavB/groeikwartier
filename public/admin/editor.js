@@ -61,7 +61,6 @@ bar.append(
   h('div', { class: 'gk-actions' },
     h('button', { class: 'gk-btn', type: 'button', onclick: () => openPanel('fonts') }, 'Instellingen'),
     h('button', { class: 'gk-btn', type: 'button', onclick: () => openPanel('agenda') }, 'Agenda'),
-    h('button', { class: 'gk-btn', type: 'button', onclick: () => openPanel('signups') }, 'Aanmeldingen'),
     h('button', { class: 'gk-btn', type: 'button', onclick: () => openPanel('berichten') }, 'Berichten'),
     h('button', { class: 'gk-btn', type: 'button', onclick: () => openPanel('history') }, 'Versies'),
   ),
@@ -360,9 +359,9 @@ function openPanel(kind) {
   panel.hidden = false;
   const close = h('button', { class: 'gk-btn gk-ghost gk-close', type: 'button', onclick: () => { panel.hidden = true; } }, 'Sluiten');
   const body = h('div', { class: 'gk-panel-body' });
-  const titles = { fonts: 'Instellingen', agenda: 'Agenda', signups: 'Aanmeldingen', berichten: 'Berichten', history: 'Versies' };
+  const titles = { fonts: 'Instellingen', agenda: 'Agenda', berichten: 'Berichten', history: 'Versies' };
   panel.append(h('div', { class: 'gk-panel-head' }, h('h2', {}, titles[kind]), close), body);
-  ({ fonts: fontsPanel, agenda: agendaPanel, signups: signupsPanel, berichten: berichtenPanel, history: historyPanel })[kind](body);
+  ({ fonts: fontsPanel, agenda: agendaPanel, berichten: berichtenPanel, history: historyPanel })[kind](body);
 }
 
 function fontsPanel(body) {
@@ -537,46 +536,6 @@ async function berichtenPanel(body) {
       });
       box.append(card);
     }
-  } catch (e) { box.textContent = e.message; }
-}
-
-async function signupsPanel(body) {
-  body.append(h('p', { class: 'gk-help' }, 'Mensen die zich via de site hebben aangemeld voor berichten. Download de lijst om hem in een nieuwsbriefprogramma te importeren. Iedereen heeft een eigen afmeldlink; zet die onderaan elk bericht. Wie zich afmeldt, wordt hier meteen verwijderd.'));
-  const box = h('div', {}, 'Laden…');
-  body.append(box);
-  try {
-    const list = await api('/api/admin/signups');
-    box.textContent = '';
-    if (!list.length) { box.append(h('p', {}, 'Nog geen aanmeldingen.')); return; }
-    const csv = () => {
-      const q = (v) => '"' + String(v ?? '').replace(/"/g, '""') + '"';
-      return '﻿' + ['email;aangemeld_op;afmeldlink', ...list.map((x) => [x.email, x.at, x.afmeldlink].map(q).join(';'))].join('\r\n');
-    };
-    const dl = h('button', { class: 'gk-btn gk-primary', type: 'button' }, `Download ${list.length} adressen (CSV)`);
-    dl.addEventListener('click', () => {
-      const a = h('a', { href: URL.createObjectURL(new Blob([csv()], { type: 'text/csv;charset=utf-8' })), download: 'aanmeldingen-groeikwartier-' + GK.today + '.csv' });
-      panel.append(a); a.click(); a.remove();
-    });
-    const copy = h('button', { class: 'gk-btn', type: 'button' }, 'Kopieer adressen');
-    const ta = h('textarea', { class: 'gk-input', readonly: true, hidden: true, rows: 4 });
-    ta.value = list.map((x) => x.email).join(', ');
-    copy.addEventListener('click', async () => {
-      try { await navigator.clipboard.writeText(ta.value); copy.textContent = 'Gekopieerd'; } catch { ta.hidden = false; ta.select(); }
-    });
-    const tbody = h('tbody');
-    for (const x of list) {
-      const del = h('button', { class: 'gk-btn gk-danger gk-small', type: 'button' }, 'Verwijderen');
-      const row = h('tr', {}, h('td', { class: 'gk-copyable' }, x.email), h('td', {}, fmtDate(x.at)), h('td', {}, del));
-      del.addEventListener('click', async () => {
-        if (!del.dataset.sure) { del.dataset.sure = '1'; del.textContent = 'Zeker?'; setTimeout(() => { delete del.dataset.sure; del.textContent = 'Verwijderen'; }, 3000); return; }
-        del.disabled = true;
-        try { await api('/api/admin/signup-verwijderen', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: x.email }) }); row.remove(); }
-        catch (e) { del.disabled = false; del.textContent = e.message; }
-      });
-      tbody.append(row);
-    }
-    box.append(h('div', { class: 'gk-row' }, dl, copy), ta, h('table', { class: 'gk-table' },
-      h('thead', {}, h('tr', {}, h('th', {}, 'E-mail'), h('th', {}, 'Aangemeld'), h('th', {}, ''))), tbody));
   } catch (e) { box.textContent = e.message; }
 }
 

@@ -23,8 +23,20 @@ html,body{margin:0;background:var(--c-achtergrond);color:var(--c-tekst)}
 html{scroll-behavior:smooth}
 @media (prefers-reduced-motion: reduce){html{scroll-behavior:auto}}
 a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
-.m-nav a{color:var(--c-achtergrond);text-decoration:none;padding:12px 4px}
-.m-nav a:hover{color:var(--c-kaart)}
+.m-nav a{color:var(--c-achtergrond);text-decoration:none;padding:12px 14px}
+.m-nav a{transition:background-color .2s ease,color .2s ease}
+.m-nav a:hover,.m-nav a:focus-visible{background:#87989D;color:var(--c-donker)}
+.c-wrap{width:100%;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:36px 72px;margin-top:20px;padding-top:28px;border-top:1px solid var(--c-contact)}
+.c-col{display:flex;flex-direction:column;align-items:center;gap:10px}
+.c-mail{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
+.c-copy{font:inherit;font-size:0.68rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;background:none;border:1px solid var(--c-hoofd);color:var(--c-hoofd);padding:8px 12px;min-height:36px;cursor:pointer;transition:background-color .2s ease,color .2s ease}
+.c-copy:hover{background:#87989D;border-color:#87989D;color:var(--c-donker)}
+.c-insta{display:flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:50%;background:var(--c-donker);transition:background-color .2s ease}
+.c-insta:hover{background:#87989D}
+.c-insta svg{width:26px;height:26px;fill:none;stroke:var(--c-achtergrond);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.c-insta .c-dot{fill:var(--c-achtergrond);stroke:none}
+.c-insta:hover svg{stroke:var(--c-donker)}
+.c-insta:hover .c-dot{fill:var(--c-donker)}
 .m-split{display:grid;grid-template-columns:minmax(0,1fr);gap:40px;align-items:center}
 @media (min-width: 860px){.m-split{grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:64px}}
 .m-person{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;justify-items:center}
@@ -120,7 +132,7 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
 
   <!-- Header -->
   <header class="m-header" style="position: sticky; top: 0; z-index: 10">
-    <nav class="m-nav" aria-label="Hoofdmenu" style="background: var(--c-donker); border-bottom: 8px solid var(--c-hoofd); display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 36px; padding: 10px 16px; font-size: 0.74rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase">
+    <nav class="m-nav" aria-label="Hoofdmenu" style="background: var(--c-donker); border-bottom: 8px solid var(--c-hoofd); display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 8px; padding: 10px 16px; font-size: 0.74rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase">
       <a href="/#top">Home</a>
       <a href="/#agenda">Agenda</a>
       <a href="/#wij">Over ons</a>
@@ -239,10 +251,16 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
         </form>
         <p data-signup-msg role="status" aria-live="polite" style="margin: 0; font-size: 0.9rem; min-height: 1.4em"></p>
         <p data-k="contact-privacy2" style="margin: 0; max-width: 34em; font-size: calc(0.8rem * var(--fs,1)); line-height: 1.6; color: var(--c-tekst-zacht)">Je krijgt eerst een bevestigingsmail. Afmelden kan altijd, via de link in elk bericht of onderaan deze pagina.</p>
-        <div style="width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 20px; margin-top: 20px; padding-top: 28px; border-top: 1px solid var(--c-contact)">
-          <div><p data-k="contact-kop-mail" style="margin: 0 0 4px; font-size: calc(0.68rem * var(--fs,1)); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--c-hoofd)">Mail</p><a data-l="link-mail" data-k="contact-mail" href="mailto:hetgroeikwartier@gmail.com" style="font-size: calc(0.95rem * var(--fs,1)); overflow-wrap: anywhere">hetgroeikwartier@gmail.com</a></div>
-          <div><p data-k="contact-kop-insta" style="margin: 0 0 4px; font-size: calc(0.68rem * var(--fs,1)); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--c-hoofd)">Instagram</p><a data-l="link-instagram" data-k="contact-instagram" href="[INSTAGRAM-LINK]" style="font-size: calc(0.95rem * var(--fs,1))">@[INSTAGRAM]</a></div>
-          <div><p data-k="contact-kop-waar" style="margin: 0 0 4px; font-size: calc(0.68rem * var(--fs,1)); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--c-hoofd)">Waar</p><p data-k="contact-waar" style="margin: 0; font-size: calc(0.95rem * var(--fs,1))">Soesterkwartier, Amersfoort</p></div>
+        <div class="c-wrap">
+          <div class="c-col">
+            <p data-k="contact-kop-mail" style="margin: 0; font-size: calc(0.68rem * var(--fs,1)); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--c-hoofd)">Contact</p>
+            <p data-k="contact-kop-email" style="margin: 0; font-size: calc(0.8rem * var(--fs,1)); color: var(--c-tekst-zacht)">Email</p>
+            <div class="c-mail"><span data-k="contact-mail" id="c-email" style="font-size: calc(0.95rem * var(--fs,1)); overflow-wrap: anywhere">hetgroeikwartier@gmail.com</span><button type="button" class="c-copy" id="c-copy" aria-label="Kopieer e-mailadres">Kopieer</button></div>
+          </div>
+          <div class="c-col">
+            <p data-k="contact-kop-insta" style="margin: 0; font-size: calc(0.68rem * var(--fs,1)); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--c-hoofd)">Connect met ons via:</p>
+            <a class="c-insta" data-l="link-instagram" href="[INSTAGRAM-LINK]" aria-label="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><circle class="c-dot" cx="17.2" cy="6.8" r="0.6"></circle></svg></a>
+          </div>
         </div>
       </div>
     </div>
@@ -272,6 +290,7 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
 </div>
 
 <script>
+(function(){var b=document.getElementById('c-copy'),t=document.getElementById('c-email');if(!b||!t)return;b.addEventListener('click',function(){var txt=t.textContent.trim();function klaar(){b.textContent='Gekopieerd';setTimeout(function(){b.textContent='Kopieer';},1800);}function terug(){var r=document.createRange();r.selectNodeContents(t);var s=window.getSelection();s.removeAllRanges();s.addRange(r);try{document.execCommand('copy');klaar();}catch(e){}s.removeAllRanges();}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(klaar,terug);}else{terug();}});})();
 document.querySelectorAll('.m-toggle').forEach(function(b){
   var doel=document.getElementById(b.dataset.target);
   if(doel && !document.documentElement.hasAttribute('data-admin') && !doel.textContent.trim()){b.hidden=true;return;}

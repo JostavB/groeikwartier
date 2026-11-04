@@ -30,8 +30,8 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
 .m-person{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;justify-items:center}
 .m-person > div:last-child{justify-self:stretch}
 .m-person h3,.m-person h3 + p{text-align:center}
-.m-photo{width:140px;height:140px;border-radius:50%;background:var(--c-hoofd);display:flex;align-items:center;justify-content:center;font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--c-zand);flex:none}
-@media (min-width: 760px){.m-person{grid-template-columns:170px minmax(0,1fr);gap:48px;align-items:start;justify-items:start}.m-photo{width:170px;height:170px}.m-person h3,.m-person h3 + p{text-align:left}}
+.m-photo{width:140px;height:175px;border-radius:16px;background:var(--c-hoofd);display:flex;align-items:center;justify-content:center;font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--c-zand);flex:none}
+@media (min-width: 760px){.m-person{grid-template-columns:170px minmax(0,1fr);gap:48px;align-items:start;justify-items:start}.m-photo{width:170px;height:212px}.m-person h3,.m-person h3 + p{text-align:left}}
 .m-toggle{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;background:none;border:0;border-bottom:1px solid currentColor;color:#FFFFFF;transition:color .15s;font:inherit;font-size:0.72rem;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;padding:12px 0 8px;min-height:44px;cursor:pointer}
 .m-toggle svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transition:transform .2s}
 .m-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:20px}
@@ -188,7 +188,7 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
       <h2 data-k="wij-titel" style="margin: 0; text-align: center; font-family: var(--font-kop); font-weight: 500; font-size: calc(clamp(2.2rem, 4.6vw, 3rem) * var(--fs,1))">Wie zijn wij</h2>
 
       <article class="m-person b-panel">
-        <div class="m-photo" data-img="foto-josta" data-ph style="background-size: cover; background-position: center">[Foto]</div>
+        <div class="m-photo" data-img="foto-josta" role="img" aria-label="Josta" style="background-image: url('/foto-josta.jpg'); background-size: cover; background-position: center"></div>
         <div style="display: flex; flex-direction: column; gap: 14px">
           <h3 data-k="josta-naam" style="margin: 0; font-family: var(--font-kop); font-weight: 500; font-size: calc(2.2rem * var(--fs,1)); line-height: 1">Josta</h3>
           <p data-k="josta-rol" style="margin: 0; font-size: calc(0.7rem * var(--fs,1)); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: color-mix(in srgb, var(--c-accent) 55%, #fff)">Schemacoach · Centrum voor Emotionele Basisbehoeften</p>
@@ -205,7 +205,7 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
 
 
       <article class="m-person b-panel">
-        <div class="m-photo" data-img="foto-eva" data-ph style="background-size: cover; background-position: center">[Foto]</div>
+        <div class="m-photo" data-img="foto-eva" role="img" aria-label="Eva" style="background-image: url('/foto-eva.jpg'); background-size: cover; background-position: center"></div>
         <div style="display: flex; flex-direction: column; gap: 14px">
           <h3 data-k="eva-naam" style="margin: 0; font-family: var(--font-kop); font-weight: 500; font-size: calc(2.2rem * var(--fs,1)); line-height: 1">Eva</h3>
           <p data-k="eva-rol" style="margin: 0; font-size: calc(0.7rem * var(--fs,1)); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: color-mix(in srgb, var(--c-accent) 55%, #fff)">Gezinsbehandelaar · Studio Binnenwereld</p>

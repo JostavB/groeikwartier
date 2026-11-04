@@ -28,9 +28,16 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
 .m-nav a:hover,.m-nav a:focus-visible{background:none;color:#87989D}
 .c-wrap{width:100%;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:36px 72px;margin-top:20px;padding-top:28px;border-top:1px solid var(--c-contact)}
 .c-col{display:flex;flex-direction:column;align-items:center;gap:10px}
-.c-mail{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
-.c-copy{font:inherit;font-size:0.68rem;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;background:none;border:1px solid var(--c-hoofd);color:var(--c-hoofd);padding:8px 12px;min-height:36px;cursor:pointer;transition:background-color .2s ease,color .2s ease}
-.c-copy:hover{background:#87989D;border-color:#87989D;color:var(--c-donker)}
+.c-mail{display:inline-flex;align-items:center;gap:12px;justify-content:center;color:var(--c-donker)}
+.c-ic{width:24px;height:24px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.c-mail-label{font-size:calc(1.3rem * var(--fs,1));letter-spacing:.01em}
+.c-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.c-copy{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;background:none;border:0;color:var(--c-hoofd);cursor:pointer;transition:background-color .2s ease,color .2s ease;position:relative}
+.c-copy .c-ic{width:20px;height:20px}
+.c-copy .c-ic-ok{display:none}
+.c-copy.is-ok .c-ic-copy{display:none}
+.c-copy.is-ok .c-ic-ok{display:block}
+.c-copy:hover,.c-copy:focus-visible{background:#87989D;color:var(--c-donker)}
 .c-insta{display:flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:50%;background:var(--c-donker);transition:background-color .2s ease}
 .c-insta:hover{background:#87989D}
 .c-insta svg{width:26px;height:26px;fill:none;stroke:var(--c-achtergrond);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -254,7 +261,7 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
         <div class="c-wrap">
           <div class="c-col">
             <p data-k="contact-kop-mail" style="margin: 0; font-size: calc(0.68rem * var(--fs,1)); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--c-hoofd)">Contact</p>
-            <div class="c-mail"><span data-k="contact-mail" id="c-email" style="font-size: calc(0.95rem * var(--fs,1)); overflow-wrap: anywhere">hetgroeikwartier@gmail.com</span><button type="button" class="c-copy" id="c-copy" aria-label="Kopieer e-mailadres">Kopieer</button></div>
+            <div class="c-mail"><svg class="c-ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="1.5"></rect><path d="m4 7 8 6 8-6"></path></svg><span data-k="contact-kop-email" class="c-mail-label">E-mail</span><button type="button" class="c-copy" id="c-copy" aria-label="Kopieer e-mailadres" title="Kopieer e-mailadres"><svg class="c-ic c-ic-copy" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"></rect><path d="M5 15V6a2 2 0 0 1 2-2h8"></path></svg><svg class="c-ic c-ic-ok" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"></path></svg></button><span data-k="contact-mail" id="c-email" class="c-sr">hetgroeikwartier@gmail.com</span><span class="c-sr" role="status" aria-live="polite" id="c-status"></span></div>
           </div>
           <div class="c-col">
             <p data-k="contact-kop-insta" style="margin: 0; font-size: calc(0.68rem * var(--fs,1)); font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: var(--c-hoofd)">Connect met ons via:</p>
@@ -289,7 +296,7 @@ a{color:var(--c-hoofd)}a:hover{color:var(--c-donker)}
 </div>
 
 <script>
-(function(){var b=document.getElementById('c-copy'),t=document.getElementById('c-email');if(!b||!t)return;b.addEventListener('click',function(){var txt=t.textContent.trim();function klaar(){b.textContent='Gekopieerd';setTimeout(function(){b.textContent='Kopieer';},1800);}function terug(){var r=document.createRange();r.selectNodeContents(t);var s=window.getSelection();s.removeAllRanges();s.addRange(r);try{document.execCommand('copy');klaar();}catch(e){}s.removeAllRanges();}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(klaar,terug);}else{terug();}});})();
+(function(){var b=document.getElementById('c-copy'),t=document.getElementById('c-email'),st=document.getElementById('c-status');if(!b||!t)return;b.addEventListener('click',function(){var txt=t.textContent.trim();function klaar(){b.classList.add('is-ok');if(st)st.textContent='E-mailadres gekopieerd';setTimeout(function(){b.classList.remove('is-ok');if(st)st.textContent='';},1800);}function terug(){var r=document.createRange();r.selectNodeContents(t);var s=window.getSelection();s.removeAllRanges();s.addRange(r);try{document.execCommand('copy');klaar();}catch(e){}s.removeAllRanges();}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(klaar,terug);}else{terug();}});})();
 document.querySelectorAll('.m-toggle').forEach(function(b){
   var doel=document.getElementById(b.dataset.target);
   if(doel && !document.documentElement.hasAttribute('data-admin') && !doel.textContent.trim()){b.hidden=true;return;}

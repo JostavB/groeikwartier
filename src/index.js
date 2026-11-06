@@ -168,7 +168,11 @@ async function renderPage(env, url, admin, user = null, page = 'home') {
     .on('[data-k]', {
       element(el) {
         const k = el.getAttribute('data-k');
-        if (typeof texts[k] === 'string') el.setInnerContent(sanitizeHTML(texts[k]), { html: true });
+        if (typeof texts[k] === 'string') {
+          let html = sanitizeHTML(texts[k]);
+          if (!admin) html = autoLinkCentrum(html, safeUrl(links['link-centrum'], false) || CENTRUM_URL);
+          el.setInnerContent(html, { html: true });
+        }
       },
     })
     .on('[data-img]', {
@@ -253,6 +257,24 @@ async function media(env, id) {
 // ---------- opschonen ----------
 
 const ALLOWED_TAGS = new Set(['b', 'strong', 'i', 'em', 'a', 'br', 'span', 'u']);
+
+// Opgeslagen teksten kunnen de link naar het Centrum missen. Maak van de naam dan alsnog een link,
+// behalve waar die al in een link staat.
+const CENTRUM_URL = 'https://emotionelebasisbehoeften.nl';
+const CENTRUM_NAAM = /Centrum voor Emotionele Basisbehoeften/gi;
+
+export function autoLinkCentrum(html, href) {
+  let inLink = 0;
+  return String(html).split(/(<[^>]*>)/).map((part) => {
+    if (part.startsWith('<')) {
+      if (/^<a[\s>]/i.test(part)) inLink++;
+      else if (/^<\/a\s*>/i.test(part)) inLink = Math.max(0, inLink - 1);
+      return part;
+    }
+    if (inLink) return part;
+    return part.replace(CENTRUM_NAAM, (m) => `<a data-l="link-centrum" href="${esc(href)}" target="_blank" rel="noopener">${m}</a>`);
+  }).join('');
+}
 
 export function sanitizeHTML(html) {
   let s = String(html ?? '').slice(0, 20000);
